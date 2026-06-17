@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Golden Event by Khaoula — Premium Event Decoration</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Luxury event decoration services — Baby Showers, Birthdays, Henna &amp; Anniversaries. Custom themes, elegant balloon arches, and bespoke setups.">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&amp;family=Inter:wght@300;400;500;600&amp;display=swap" rel="stylesheet">
+
+  <!-- Tailwind CSS Play CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: {
+              DEFAULT: '#D4AF37',
+              light: '#F0D060',
+              dark: '#B8960C',
+            },
+            cream: '#FDFBF7',
+            charcoal: '#1A1A1A',
+          },
+          fontFamily: {
+            serif: ['"Playfair Display"', 'Georgia', 'serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+          animation: {
+            'float': 'float 3s ease-in-out infinite',
+            'fade-in': 'fadeIn 0.5s ease-out',
+            'slide-up': 'slideUp 0.4s ease-out',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-8px)' },
+            },
+            fadeIn: {
+              '0%': { opacity: '0' },
+              '100%': { opacity: '1' },
+            },
+            slideUp: {
+              '0%': { opacity: '0', transform: 'translateY(16px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            },
+          },
+        }
+      }
+    }
+  </script>
+<link rel="stylesheet" href="styles.css"></head>
+<body class="bg-cream antialiased">
+  <app-root></app-root>
+<script src="runtime.js" type="module"></script><script src="polyfills.js" type="module"></script><script src="vendor.js" type="module"></script><script src="main.js" type="module"></script></body>
+</html>
