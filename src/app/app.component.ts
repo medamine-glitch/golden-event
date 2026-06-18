@@ -2,7 +2,7 @@ import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-interface Supplement { id: string; name: string; description: string; price: number; selected: boolean; icon: string; }
+interface Supplement { id: string; name: string; description: string; price: number; selected: boolean; icon: string; image: string; }
 interface ColorSwatch { name: string; hex: string; }
 interface TestimonialQuote { name: string; location: string; event: string; quote: string; }
 interface FaqItem { id: string; q: string; a: string; }
@@ -13,6 +13,7 @@ interface Theme {
   basePrice: number; badge?: string;
   highlights: string[]; whatIsIncluded: string[];
   palette: ColorSwatch[]; testimonialQuotes: TestimonialQuote[];
+  images: string[];
 }
 interface BookingData { fullName: string; phone: string; eventDate: string; eventHour: string; baseTheme: string; notes: string; }
 type ViewType = 'home' | 'detail' | 'customizer';
@@ -203,7 +204,18 @@ type TableTier = 'none' | 'single' | 'trio';
           >
             <!-- Visual panel -->
             <div class="relative overflow-hidden flex items-end"
-                 [style]="'background:linear-gradient(140deg,' + theme.gradientFrom + ',' + theme.gradientTo + ');height:' + (i===0 ? '320px' : '180px') + ';'">
+                 [style]="'height:' + (i===0 ? '320px' : '180px') + ';' + (theme.images.length ? '' : 'background:linear-gradient(140deg,' + theme.gradientFrom + ',' + theme.gradientTo + ');')">
+              @if (theme.images.length) {
+                <img [src]="theme.images[0]" [alt]="theme.name" class="absolute inset-0 w-full h-full object-cover object-center">
+                <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.52) 0%,transparent 58%);"></div>
+              } @else {
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none"
+                     [style]="'width:' + (i===0?'200px':'130px') + ';height:' + (i===0?'160px':'100px') + ';border:1.5px solid ' + theme.accentHex + ';border-top:none;opacity:0.22;border-radius:0 0 ' + (i===0?'100px':'65px') + ' ' + (i===0?'100px':'65px') + ';'"></div>
+                @if (i === 0) {
+                  <div class="absolute animate-float" [style]="'width:36px;height:44px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:' + theme.accentHex + ';opacity:0.5;top:60px;left:60px;'"></div>
+                  <div class="absolute animate-float" [style]="'width:28px;height:34px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:' + theme.accentHex + ';opacity:0.35;top:80px;right:80px;animation-delay:0.7s;'"></div>
+                }
+              }
               @if (theme.badge) {
                 <div class="absolute top-4 right-4 rounded-full px-3 py-1 text-[9px] font-black tracking-widest uppercase text-white z-10" style="background:#D4AF37;">{{ theme.badge }}</div>
               }
@@ -212,16 +224,13 @@ type TableTier = 'none' | 'single' | 'trio';
                   <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                 </div>
               }
-              <!-- Arch decorative rings inside card -->
-              <div class="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none"
-                   [style]="'width:' + (i===0?'200px':'130px') + ';height:' + (i===0?'160px':'100px') + ';border:1.5px solid ' + theme.accentHex + ';border-top:none;opacity:0.22;border-radius:0 0 ' + (i===0?'100px':'65px') + ' ' + (i===0?'100px':'65px') + ';'"></div>
-
-              <!-- If first card, show themed floating balloons -->
-              @if (i === 0) {
-                <div class="absolute animate-float" [style]="'width:36px;height:44px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:' + theme.accentHex + ';opacity:0.5;top:60px;left:60px;'"></div>
-                <div class="absolute animate-float" [style]="'width:28px;height:34px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:' + theme.accentHex + ';opacity:0.35;top:80px;right:80px;animation-delay:0.7s;'"></div>
+              <!-- Photo count badge if multiple images -->
+              @if (theme.images.length > 1) {
+                <div class="absolute top-4 left-4 rounded-full px-2 py-0.5 text-[9px] font-bold flex items-center gap-1 z-10" style="background:rgba(0,0,0,0.4);color:white;backdrop-filter:blur(4px);">
+                  <svg class="w-2.5 h-2.5" fill="currentColor" viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+                  {{ theme.images.length }}
+                </div>
               }
-
               <div class="relative z-10 w-full px-5 pb-4 flex items-end justify-between">
                 <div class="flex gap-1.5">
                   @for (sw of theme.palette; track sw.name) {
@@ -389,20 +398,47 @@ type TableTier = 'none' | 'single' | 'trio';
     <div class="max-w-7xl mx-auto">
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
 
-        <!-- Panel 1: Main arch hero (spans 2 rows) -->
+        <!-- Panel 1: Photo gallery hero (spans 2 rows) -->
         <div class="lg:row-span-2 rounded-3xl relative overflow-hidden flex items-end" style="min-height:400px;"
-             [style.background]="'linear-gradient(140deg,' + selectedTheme().gradientFrom + ',' + selectedTheme().gradientTo + ')'">
-          @if (selectedTheme().badge) {
-            <div class="absolute top-5 right-5 rounded-full px-3 py-1 text-[9px] font-black tracking-widest uppercase text-white" style="background:#D4AF37;">{{ selectedTheme().badge }}</div>
+             [style.background]="selectedTheme().images.length ? '#0a0a0a' : 'linear-gradient(140deg,' + selectedTheme().gradientFrom + ',' + selectedTheme().gradientTo + ')'">
+          @if (selectedTheme().images.length) {
+            @for (img of selectedTheme().images; track $index) {
+              <img [src]="img" [alt]="selectedTheme().name + ' photo ' + ($index + 1)"
+                   class="absolute inset-0 w-full h-full object-cover transition-opacity duration-500"
+                   [style]="'opacity:' + (detailImageIndex() === $index ? '1' : '0') + ';'">
+            }
+            <div class="absolute inset-0 z-10" style="background:linear-gradient(to top,rgba(0,0,0,0.65) 0%,rgba(0,0,0,0.05) 55%);"></div>
+            @if (selectedTheme().images.length > 1) {
+              <button (click)="$event.stopPropagation();prevDetailImage()"
+                      class="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                      style="background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.28);color:white;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              </button>
+              <button (click)="$event.stopPropagation();nextDetailImage()"
+                      class="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                      style="background:rgba(255,255,255,0.18);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.28);color:white;">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+              </button>
+              <div class="absolute bottom-20 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+                @for (img of selectedTheme().images; track $index) {
+                  <button (click)="$event.stopPropagation();detailImageIndex.set($index)"
+                          class="rounded-full transition-all duration-200"
+                          [style]="detailImageIndex() === $index ? 'width:22px;height:5px;background:white;' : 'width:5px;height:5px;background:rgba(255,255,255,0.45);'">
+                  </button>
+                }
+              </div>
+            }
+          } @else {
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none" style="width:220px;height:280px;border:2px solid rgba(255,255,255,0.35);border-top:none;border-radius:0 0 110px 110px;"></div>
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none" style="width:150px;height:196px;border:1.5px solid rgba(255,255,255,0.2);border-top:none;border-radius:0 0 75px 75px;"></div>
+            <div class="absolute animate-float" [style]="'width:48px;height:58px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:' + selectedTheme().accentHex + ';opacity:0.55;top:80px;left:52px;'"></div>
+            <div class="absolute animate-float" [style]="'width:36px;height:44px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:' + selectedTheme().accentHex + ';opacity:0.38;top:60px;right:48px;animation-delay:0.8s;'"></div>
           }
-          <!-- Large arch art -->
-          <div class="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none" style="width:220px;height:280px;border:2px solid rgba(255,255,255,0.35);border-top:none;border-radius:0 0 110px 110px;"></div>
-          <div class="absolute top-0 left-1/2 -translate-x-1/2 pointer-events-none" style="width:150px;height:196px;border:1.5px solid rgba(255,255,255,0.2);border-top:none;border-radius:0 0 75px 75px;"></div>
-          <!-- Themed balloons -->
-          <div class="absolute animate-float" [style]="'width:48px;height:58px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:' + selectedTheme().accentHex + ';opacity:0.55;top:80px;left:52px;'"></div>
-          <div class="absolute animate-float" [style]="'width:36px;height:44px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:' + selectedTheme().accentHex + ';opacity:0.38;top:60px;right:48px;animation-delay:0.8s;'"></div>
+          @if (selectedTheme().badge) {
+            <div class="absolute top-5 right-5 rounded-full px-3 py-1 text-[9px] font-black tracking-widest uppercase text-white z-20" style="background:#D4AF37;">{{ selectedTheme().badge }}</div>
+          }
           <!-- Floor label -->
-          <div class="relative z-10 w-full p-7">
+          <div class="relative z-20 w-full p-7">
             <div class="text-[9px] tracking-[0.25em] uppercase mb-1" style="color:rgba(255,255,255,0.6);">{{ selectedTheme().subtitle }}</div>
             <h1 class="font-display italic text-3xl leading-snug" style="color:white;">{{ selectedTheme().name }}</h1>
           </div>
@@ -504,26 +540,48 @@ type TableTier = 'none' | 'single' | 'trio';
 @if (currentView() === 'customizer') {
 <div class="view-enter pt-16">
 
-  <!-- Step breadcrumb -->
-  <div class="px-5 py-5" style="border-bottom:1px solid rgba(212,175,55,0.12);background:rgba(253,251,247,0.9);">
-    <div class="max-w-7xl mx-auto flex items-center gap-2">
-      <button (click)="goTo('home')" class="text-xs font-semibold tracking-wide uppercase transition-colors hover:opacity-80" style="color:rgba(26,26,26,0.4);">Collection</button>
-      <svg class="w-3 h-3" style="color:rgba(26,26,26,0.25);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-      <span class="text-xs font-bold tracking-wide uppercase" style="color:#D4AF37;">Configurer</span>
-      <svg class="w-3 h-3" style="color:rgba(26,26,26,0.25);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
-      <span class="text-xs font-semibold tracking-wide uppercase" style="color:rgba(26,26,26,0.35);">Réserver</span>
+  <!-- Step progress bar -->
+  <div class="px-5 py-4" style="border-bottom:1px solid rgba(212,175,55,0.12);background:rgba(253,251,247,0.9);">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex items-center">
+        @for (step of customizerSteps; track step.n; let last = $last) {
+          <div class="flex items-center" [class.flex-1]="!last">
+            <button class="flex items-center gap-2 flex-shrink-0"
+                    (click)="customizerStep() > step.n ? customizerStep.set(step.n) : null">
+              <div class="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold transition-all duration-200"
+                   [style]="customizerStep() >= step.n ? 'background:#D4AF37;color:white;' : 'background:rgba(212,175,55,0.1);color:rgba(26,26,26,0.3);border:1px solid rgba(212,175,55,0.2);'">
+                @if (customizerStep() > step.n) {
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                } @else {
+                  {{ step.n }}
+                }
+              </div>
+              <span class="text-[10px] font-bold tracking-wide uppercase hidden sm:block transition-colors"
+                    [style]="customizerStep() >= step.n ? 'color:#D4AF37;' : 'color:rgba(26,26,26,0.3);'">{{ step.label }}</span>
+            </button>
+            @if (!last) {
+              <div class="flex-1 mx-3 h-px transition-all duration-300"
+                   [style]="customizerStep() > step.n ? 'background:#D4AF37;opacity:0.5;' : 'background:rgba(212,175,55,0.15);'"></div>
+            }
+          </div>
+        }
+      </div>
     </div>
   </div>
 
   <div class="max-w-7xl mx-auto px-5 py-12">
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-start">
 
-      <!-- LEFT: Main configurator content (2 cols) -->
-      <div class="lg:col-span-2 space-y-12">
+      <!-- LEFT: Step-based configurator -->
+      <div class="lg:col-span-2">
 
-        <!-- Base theme selector strip -->
-        <div>
-          <div class="text-[10px] font-bold tracking-[0.3em] uppercase mb-5" style="color:#D4AF37;">1 · Choisir le thème de base</div>
+        <!-- ══ STEP 1: THEME ══ -->
+        @if (customizerStep() === 1) {
+        <div class="animate-fade-up">
+          <div class="mb-8">
+            <h2 class="font-display italic text-3xl mb-2" style="color:#1A1A1A;">Choisissez votre thème</h2>
+            <p class="text-sm" style="color:rgba(26,26,26,0.45);">Sélectionnez la collection qui correspond à votre événement.</p>
+          </div>
           <div class="flex flex-wrap gap-2 mb-3">
             @for (tab of tabs; track tab.id) {
               <button (click)="switchTab(tab.id)"
@@ -533,184 +591,438 @@ type TableTier = 'none' | 'single' | 'trio';
               </button>
             }
           </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             @for (theme of filteredThemes(); track theme.id) {
-              <div class="card-trace rounded-2xl p-4 cursor-pointer"
-                   [class.selected]="selectedThemeId()===theme.id"
-                   [style]="selectedThemeId()===theme.id ? 'background:rgba(212,175,55,0.07);border:2px solid #D4AF37;' : 'background:white;border:1px solid rgba(212,175,55,0.16);'"
+              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 flex flex-col"
+                   [style]="selectedThemeId()===theme.id ? 'background:white;border:2px solid #D4AF37;box-shadow:0 8px 32px rgba(212,175,55,0.18);' : 'background:white;border:1px solid rgba(212,175,55,0.16);'"
                    (click)="selectTheme(theme.id)">
-                <div class="h-20 rounded-xl mb-3 relative overflow-hidden flex items-end"
-                     [style]="'background:linear-gradient(140deg,' + theme.gradientFrom + ',' + theme.gradientTo + ');'">
+
+                <!-- Photo area with mini carousel -->
+                <div class="relative overflow-hidden" style="height:220px;">
+                  @if (theme.images.length) {
+                    @for (img of theme.images; track $index) {
+                      <img [src]="img" [alt]="theme.name + ' photo ' + ($index + 1)"
+                           class="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-400"
+                           [style]="'opacity:' + (getCardImg(theme.id) === $index ? '1' : '0') + ';'">
+                    }
+                    <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.48) 0%,transparent 55%);"></div>
+                    <!-- Arrows if multiple images -->
+                    @if (theme.images.length > 1) {
+                      <button (click)="prevCardImg(theme.id, theme.images.length, $event)"
+                              class="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                              style="background:rgba(255,255,255,0.2);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.3);color:white;">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                      </button>
+                      <button (click)="nextCardImg(theme.id, theme.images.length, $event)"
+                              class="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-105"
+                              style="background:rgba(255,255,255,0.2);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.3);color:white;">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                      </button>
+                      <!-- Dots -->
+                      <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+                        @for (img of theme.images; track $index) {
+                          <button (click)="setCardImg(theme.id, $index, $event)"
+                                  class="rounded-full transition-all duration-200"
+                                  [style]="getCardImg(theme.id) === $index ? 'width:18px;height:4px;background:white;' : 'width:4px;height:4px;background:rgba(255,255,255,0.5);'">
+                          </button>
+                        }
+                      </div>
+                    }
+                  } @else {
+                    <!-- Gradient fallback -->
+                    <div class="absolute inset-0" [style]="'background:linear-gradient(140deg,' + theme.gradientFrom + ',' + theme.gradientTo + ');'"></div>
+                    <div class="absolute top-0 left-1/2 -translate-x-1/2" style="width:120px;height:90px;border:1.5px solid rgba(255,255,255,0.3);border-top:none;border-radius:0 0 60px 60px;"></div>
+                  }
+                  <!-- Selected checkmark -->
                   @if (selectedThemeId()===theme.id) {
-                    <div class="absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center" style="background:#D4AF37;">
+                    <div class="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center z-20" style="background:#D4AF37;box-shadow:0 2px 8px rgba(212,175,55,0.5);">
+                      <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                  }
+                  @if (theme.badge) {
+                    <div class="absolute top-3 left-3 z-20 rounded-full px-2.5 py-0.5 text-[9px] font-black tracking-widest uppercase text-white" style="background:#D4AF37;">{{ theme.badge }}</div>
+                  }
+                  <!-- Theme name over photo -->
+                  <div class="absolute bottom-0 left-0 right-0 z-10 p-4">
+                    <div class="text-sm font-bold leading-tight" style="color:white;text-shadow:0 1px 4px rgba(0,0,0,0.5);">{{ theme.name }}</div>
+                    <div class="text-[10px] mt-0.5 font-bold" style="color:rgba(255,255,255,0.8);">{{ theme.basePrice }} MAD</div>
+                  </div>
+                </div>
+
+                <!-- Card body -->
+                <div class="p-4 flex flex-col flex-1">
+                  <p class="text-xs leading-relaxed mb-3 line-clamp-2" style="color:rgba(26,26,26,0.55);">{{ theme.description }}</p>
+                  <!-- Colour palette dots -->
+                  <div class="flex gap-1.5 mb-3">
+                    @for (sw of theme.palette; track sw.name) {
+                      <div class="w-4 h-4 rounded-full ring-1 ring-white shadow-sm" [style]="'background:' + sw.hex + ';'" [title]="sw.name"></div>
+                    }
+                  </div>
+                  <!-- Top 2 highlights -->
+                  <div class="space-y-1 mb-4">
+                    @for (feat of theme.highlights.slice(0,2); track feat) {
+                      <div class="flex items-center gap-1.5 text-[10px]" style="color:rgba(26,26,26,0.6);">
+                        <svg class="w-3 h-3 flex-shrink-0" style="color:#D4AF37;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        {{ feat }}
+                      </div>
+                    }
+                  </div>
+                  <!-- Action buttons -->
+                  <div class="flex gap-2 mt-auto">
+                    <button (click)="$event.stopPropagation();openDetail(theme.id)"
+                            class="flex-1 rounded-xl py-2 text-[10px] font-bold tracking-wide uppercase transition-all hover:-translate-y-px"
+                            style="border:1.5px solid rgba(212,175,55,0.35);color:#D4AF37;background:transparent;">
+                      Détails
+                    </button>
+                    <button (click)="$event.stopPropagation();selectTheme(theme.id)"
+                            class="flex-1 rounded-xl py-2 text-[10px] font-bold tracking-wide uppercase text-white transition-all hover:-translate-y-px"
+                            [style]="selectedThemeId()===theme.id ? 'background:#D4AF37;' : 'background:rgba(212,175,55,0.7);'">
+                      {{ selectedThemeId()===theme.id ? '✓ Sélectionné' : 'Choisir' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+          <div class="mt-10 pt-6 flex justify-end" style="border-top:1px solid rgba(212,175,55,0.12);">
+            <button (click)="customizerStep.set(2)"
+                    class="inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-gold-lg"
+                    style="background:#D4AF37;">
+              Continuer
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+        }
+
+        <!-- ══ STEP 2: INSTALLATION ══ -->
+        @if (customizerStep() === 2) {
+        <div class="space-y-10 animate-fade-up">
+          <div>
+            <h2 class="font-display italic text-3xl mb-2" style="color:#1A1A1A;">Configuration de l'installation</h2>
+            <p class="text-sm" style="color:rgba(26,26,26,0.45);">Choisissez les arches décoratives et la configuration de tables pour votre décoration.</p>
+          </div>
+
+          <!-- BACKDROP SELECTOR -->
+          <div>
+            <div class="text-[10px] font-bold tracking-[0.3em] uppercase mb-2" style="color:#D4AF37;">Arches décoratives</div>
+            <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Choisissez le nombre d'arches décoratifs pour votre installation.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- 1 Arche -->
+              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
+                   [style]="backdropTier()==='standard' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
+                   (click)="backdropTier.set('standard')">
+                <div class="relative overflow-hidden" style="height:160px;">
+                  <img src="assets/images/buffet5.jpeg" alt="1 arche décoration" class="absolute inset-0 w-full h-full object-cover object-center">
+                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
+                  <!-- arch CSS overlay -->
+                  <div class="absolute top-4 left-1/2 -translate-x-1/2" style="width:64px;height:56px;border:2.5px solid rgba(255,255,255,0.55);border-top:none;border-radius:0 0 32px 32px;"></div>
+                  @if (backdropTier()==='standard') {
+                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
                       <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
                   }
-                  <div class="absolute top-0 left-1/2 -translate-x-1/2" style="width:70px;height:52px;border:1.5px solid rgba(255,255,255,0.3);border-top:none;border-radius:0 0 35px 35px;"></div>
-                </div>
-                <div class="text-xs font-bold leading-snug" style="color:#1A1A1A;">{{ theme.name }}</div>
-                <div class="text-[10px] mt-1 font-semibold" style="color:#D4AF37;">{{ theme.basePrice }} MAD</div>
-              </div>
-            }
-          </div>
-        </div>
-
-        <!-- ── BACKDROP SELECTOR ── -->
-        <div>
-          <div class="text-[10px] font-bold tracking-[0.3em] uppercase mb-2" style="color:#D4AF37;">2 · Configuration des arches</div>
-          <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Choisissez le nombre d'arches décoratifs pour votre installation.</p>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-            <!-- Standard: 1 arch -->
-            <div class="supp-card rounded-2xl p-5 cursor-pointer text-center"
-                 [class.selected]="backdropTier()==='standard'"
-                 [style]="backdropTier()==='standard' ? 'background:rgba(212,175,55,0.07);border:2px solid #D4AF37;' : 'background:white;border:1px solid rgba(212,175,55,0.16);'"
-                 (click)="backdropTier.set('standard')">
-              <div class="h-20 flex items-end justify-center pb-2 mb-4">
-                <div class="relative">
-                  <div style="width:56px;height:48px;border:2.5px solid #D4AF37;border-top:none;border-radius:0 0 28px 28px;opacity:0.7;"></div>
-                  <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-16 h-px" style="background:rgba(212,175,55,0.3);"></div>
-                </div>
-              </div>
-              <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">1 Arche</div>
-              <div class="text-[10px]" style="color:rgba(26,26,26,0.4);">Standard — Inclus</div>
-              <div class="mt-2 text-xs font-semibold" style="color:rgba(26,26,26,0.35);">+0 MAD</div>
-            </div>
-
-            <!-- Double: 2 arches -->
-            <div class="supp-card rounded-2xl p-5 cursor-pointer text-center"
-                 [class.selected]="backdropTier()==='double'"
-                 [style]="backdropTier()==='double' ? 'background:rgba(212,175,55,0.07);border:2px solid #D4AF37;' : 'background:white;border:1px solid rgba(212,175,55,0.16);'"
-                 (click)="backdropTier.set('double')">
-              <div class="h-20 flex items-end justify-center pb-2 mb-4">
-                <div class="flex items-end gap-2">
-                  <div style="width:44px;height:44px;border:2.5px solid #D4AF37;border-top:none;border-radius:0 0 22px 22px;opacity:0.7;"></div>
-                  <div style="width:44px;height:44px;border:2.5px solid #D4AF37;border-top:none;border-radius:0 0 22px 22px;opacity:0.7;"></div>
-                </div>
-              </div>
-              <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">2 Arches</div>
-              <div class="text-[10px]" style="color:rgba(26,26,26,0.4);">Double installation</div>
-              <div class="mt-2 text-xs font-bold" style="color:#D4AF37;">+300 MAD</div>
-            </div>
-
-            <!-- Trio overlap: 3 arches -->
-            <div class="supp-card rounded-2xl p-5 cursor-pointer text-center"
-                 [class.selected]="backdropTier()==='trio'"
-                 [style]="backdropTier()==='trio' ? 'background:rgba(212,175,55,0.07);border:2px solid #D4AF37;' : 'background:white;border:1px solid rgba(212,175,55,0.16);'"
-                 (click)="backdropTier.set('trio')">
-              <div class="h-20 flex items-end justify-center pb-2 mb-4 relative">
-                <div class="absolute" style="width:38px;height:40px;border:2.5px solid #D4AF37;border-top:none;border-radius:0 0 19px 19px;opacity:0.4;left:20px;"></div>
-                <div class="relative z-10" style="width:48px;height:48px;border:2.5px solid #D4AF37;border-top:none;border-radius:0 0 24px 24px;opacity:0.85;"></div>
-                <div class="absolute" style="width:38px;height:40px;border:2.5px solid #D4AF37;border-top:none;border-radius:0 0 19px 19px;opacity:0.4;right:20px;"></div>
-              </div>
-              <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">Trio Duo-Arch</div>
-              <div class="text-[10px]" style="color:rgba(26,26,26,0.4);">3 arches chevauchés</div>
-              <div class="mt-2 text-xs font-bold" style="color:#D4AF37;">+550 MAD</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── TABLE & PLINTH SELECTOR ── -->
-        <div>
-          <div class="text-[10px] font-bold tracking-[0.3em] uppercase mb-2" style="color:#D4AF37;">3 · Tables & Présentoirs</div>
-          <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Choisissez la configuration de tables assorties à votre thème.</p>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-
-            <!-- None -->
-            <div class="supp-card rounded-2xl p-5 cursor-pointer text-center"
-                 [class.selected]="tableTier()==='none'"
-                 [style]="tableTier()==='none' ? 'background:rgba(212,175,55,0.07);border:2px solid #D4AF37;' : 'background:white;border:1px solid rgba(212,175,55,0.16);'"
-                 (click)="tableTier.set('none')">
-              <div class="h-20 flex items-center justify-center mb-4">
-                <div class="w-12 h-12 rounded-full flex items-center justify-center" style="border:2px dashed rgba(212,175,55,0.3);">
-                  <svg class="w-5 h-5" style="color:rgba(212,175,55,0.4);" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                </div>
-              </div>
-              <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">Sans table</div>
-              <div class="text-[10px]" style="color:rgba(26,26,26,0.4);">Configuration standard</div>
-              <div class="mt-2 text-xs font-semibold" style="color:rgba(26,26,26,0.35);">+0 MAD</div>
-            </div>
-
-            <!-- Single cylinder table -->
-            <div class="supp-card rounded-2xl p-5 cursor-pointer text-center"
-                 [class.selected]="tableTier()==='single'"
-                 [style]="tableTier()==='single' ? 'background:rgba(212,175,55,0.07);border:2px solid #D4AF37;' : 'background:white;border:1px solid rgba(212,175,55,0.16);'"
-                 (click)="tableTier.set('single')">
-              <div class="h-20 flex items-end justify-center pb-2 mb-4">
-                <div class="flex flex-col items-center">
-                  <!-- Cylinder top (ellipse) -->
-                  <div style="width:32px;height:10px;background:rgba(212,175,55,0.55);border-radius:50%;margin-bottom:-1px;"></div>
-                  <!-- Cylinder body -->
-                  <div style="width:28px;height:38px;background:rgba(212,175,55,0.18);border:2px solid rgba(212,175,55,0.55);border-radius:0 0 4px 4px;"></div>
-                </div>
-              </div>
-              <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">Table Solo</div>
-              <div class="text-[10px]" style="color:rgba(26,26,26,0.4);">Présentoir cylindrique</div>
-              <div class="mt-2 text-xs font-bold" style="color:#D4AF37;">+250 MAD</div>
-            </div>
-
-            <!-- Trio tables (staggered heights) -->
-            <div class="supp-card rounded-2xl p-5 cursor-pointer text-center"
-                 [class.selected]="tableTier()==='trio'"
-                 [style]="tableTier()==='trio' ? 'background:rgba(212,175,55,0.07);border:2px solid #D4AF37;' : 'background:white;border:1px solid rgba(212,175,55,0.16);'"
-                 (click)="tableTier.set('trio')">
-              <div class="h-20 flex items-end justify-center gap-1.5 pb-2 mb-4">
-                @for (h of tableTrios; track h) {
-                  <div class="flex flex-col items-center">
-                    <div [style]="'width:22px;height:8px;background:rgba(212,175,55,0.55);border-radius:50%;margin-bottom:-1px;'"></div>
-                    <div [style]="'width:18px;height:' + h + 'px;background:rgba(212,175,55,0.18);border:1.5px solid rgba(212,175,55,0.55);border-radius:0 0 3px 3px;'"></div>
+                  <div class="absolute bottom-0 left-0 right-0 p-3">
+                    <div class="text-xs font-bold text-white">1 Arche</div>
+                    <div class="text-[10px] text-white/70">Standard — Inclus</div>
                   </div>
-                }
+                </div>
+                <div class="px-4 py-3" [style]="backdropTier()==='standard' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
+                  <div class="text-xs font-semibold" style="color:rgba(26,26,26,0.35);">+0 MAD</div>
+                </div>
               </div>
-              <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">Trio Étagé</div>
-              <div class="text-[10px]" style="color:rgba(26,26,26,0.4);">3 présentoirs assortis</div>
-              <div class="mt-2 text-xs font-bold" style="color:#D4AF37;">+450 MAD</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ── PREMIUM ADD-ONS ── -->
-        <div>
-          <div class="text-[10px] font-bold tracking-[0.3em] uppercase mb-2" style="color:#D4AF37;">4 · Ajouts Premium</div>
-          <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Sélectionnez des éléments supplémentaires pour sublimer votre événement.</p>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            @for (supp of supplements(); track supp.id) {
-              <div class="supp-card rounded-2xl p-5 cursor-pointer"
-                   [class.selected]="supp.selected"
-                   [style]="supp.selected ? 'background:rgba(212,175,55,0.07);border:2px solid #D4AF37;' : 'background:white;border:1px solid rgba(212,175,55,0.16);'"
-                   (click)="toggleSupplement(supp.id)">
-                <div class="flex items-start gap-4">
-                  <!-- Visual icon container -->
-                  <div class="w-14 h-14 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl"
-                       [style]="supp.selected ? 'background:rgba(212,175,55,0.12);' : 'background:rgba(212,175,55,0.06);'">
-                    {{ supp.icon }}
+              <!-- 2 Arches -->
+              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
+                   [style]="backdropTier()==='double' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
+                   (click)="backdropTier.set('double')">
+                <div class="relative overflow-hidden" style="height:160px;">
+                  <img src="assets/images/buffet2.jpeg" alt="2 arches décoration" class="absolute inset-0 w-full h-full object-cover object-center">
+                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
+                  <div class="absolute top-4 left-1/2 -translate-x-1/2 flex gap-3">
+                    <div style="width:44px;height:44px;border:2.5px solid rgba(255,255,255,0.55);border-top:none;border-radius:0 0 22px 22px;"></div>
+                    <div style="width:44px;height:44px;border:2.5px solid rgba(255,255,255,0.55);border-top:none;border-radius:0 0 22px 22px;"></div>
                   </div>
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-start justify-between gap-2">
-                      <div class="text-sm font-bold" style="color:#1A1A1A;">{{ supp.name }}</div>
-                      <!-- Custom checkbox -->
-                      <div class="w-5 h-5 rounded-md flex-shrink-0 flex items-center justify-center mt-0.5"
-                           [style]="supp.selected ? 'background:#D4AF37;' : 'background:white;border:1.5px solid rgba(212,175,55,0.35);'">
-                        @if (supp.selected) {
-                          <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                        }
-                      </div>
+                  @if (backdropTier()==='double') {
+                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
+                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
-                    <div class="text-xs mt-1 leading-relaxed" style="color:rgba(26,26,26,0.5);">{{ supp.description }}</div>
-                    <div class="text-xs font-bold mt-2" style="color:#D4AF37;">+{{ supp.price }} MAD</div>
+                  }
+                  <div class="absolute bottom-0 left-0 right-0 p-3">
+                    <div class="text-xs font-bold text-white">2 Arches</div>
+                    <div class="text-[10px] text-white/70">Double installation</div>
                   </div>
                 </div>
+                <div class="px-4 py-3" [style]="backdropTier()==='double' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
+                  <div class="text-xs font-bold" style="color:#D4AF37;">+300 MAD</div>
+                </div>
               </div>
-            }
+              <!-- Trio -->
+              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
+                   [style]="backdropTier()==='trio' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
+                   (click)="backdropTier.set('trio')">
+                <div class="relative overflow-hidden" style="height:160px;">
+                  <img src="assets/images/buffet1.jpeg" alt="trio arches décoration" class="absolute inset-0 w-full h-full object-cover object-center">
+                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
+                  <div class="absolute top-4 left-1/2 -translate-x-1/2 flex items-end" style="gap:6px;">
+                    <div style="width:36px;height:38px;border:2px solid rgba(255,255,255,0.4);border-top:none;border-radius:0 0 18px 18px;"></div>
+                    <div style="width:46px;height:48px;border:2.5px solid rgba(255,255,255,0.65);border-top:none;border-radius:0 0 23px 23px;"></div>
+                    <div style="width:36px;height:38px;border:2px solid rgba(255,255,255,0.4);border-top:none;border-radius:0 0 18px 18px;"></div>
+                  </div>
+                  @if (backdropTier()==='trio') {
+                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
+                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                  }
+                  <div class="absolute bottom-0 left-0 right-0 p-3">
+                    <div class="text-xs font-bold text-white">Trio Duo-Arch</div>
+                    <div class="text-[10px] text-white/70">3 arches chevauchés</div>
+                  </div>
+                </div>
+                <div class="px-4 py-3" [style]="backdropTier()==='trio' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
+                  <div class="text-xs font-bold" style="color:#D4AF37;">+550 MAD</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- TABLE & PLINTH SELECTOR -->
+          <div>
+            <div class="text-[10px] font-bold tracking-[0.3em] uppercase mb-2" style="color:#D4AF37;">Tables & Présentoirs</div>
+            <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Choisissez la configuration de tables assorties à votre thème.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- Sans table -->
+              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
+                   [style]="tableTier()==='none' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
+                   (click)="tableTier.set('none')">
+                <div class="relative overflow-hidden" style="height:160px;">
+                  <img src="assets/images/buffet4.jpeg" alt="sans table" class="absolute inset-0 w-full h-full object-cover object-center">
+                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
+                  <!-- X icon overlay -->
+                  <div class="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.18);backdrop-filter:blur(4px);border:1.5px solid rgba(255,255,255,0.4);">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                  </div>
+                  @if (tableTier()==='none') {
+                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
+                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                  }
+                  <div class="absolute bottom-0 left-0 right-0 p-3">
+                    <div class="text-xs font-bold text-white">Sans table</div>
+                    <div class="text-[10px] text-white/70">Configuration standard</div>
+                  </div>
+                </div>
+                <div class="px-4 py-3" [style]="tableTier()==='none' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
+                  <div class="text-xs font-semibold" style="color:rgba(26,26,26,0.35);">+0 MAD</div>
+                </div>
+              </div>
+              <!-- Table Solo -->
+              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
+                   [style]="tableTier()==='single' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
+                   (click)="tableTier.set('single')">
+                <div class="relative overflow-hidden" style="height:160px;">
+                  <img src="assets/images/buffet7.jpeg" alt="table solo" class="absolute inset-0 w-full h-full object-cover object-center">
+                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
+                  <!-- cylinder overlay -->
+                  <div class="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center">
+                    <div style="width:36px;height:12px;background:rgba(255,255,255,0.3);border-radius:50%;"></div>
+                    <div style="width:30px;height:42px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.45);border-radius:0 0 4px 4px;"></div>
+                  </div>
+                  @if (tableTier()==='single') {
+                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
+                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                  }
+                  <div class="absolute bottom-0 left-0 right-0 p-3">
+                    <div class="text-xs font-bold text-white">Table Solo</div>
+                    <div class="text-[10px] text-white/70">Présentoir cylindrique</div>
+                  </div>
+                </div>
+                <div class="px-4 py-3" [style]="tableTier()==='single' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
+                  <div class="text-xs font-bold" style="color:#D4AF37;">+250 MAD</div>
+                </div>
+              </div>
+              <!-- Trio Étagé -->
+              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
+                   [style]="tableTier()==='trio' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
+                   (click)="tableTier.set('trio')">
+                <div class="relative overflow-hidden" style="height:160px;">
+                  <img src="assets/images/buffet6.jpeg" alt="trio étagé" class="absolute inset-0 w-full h-full object-cover object-center">
+                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
+                  <!-- trio cylinders overlay -->
+                  <div class="absolute top-4 left-1/2 -translate-x-1/2 flex items-end" style="gap:5px;">
+                    @for (h of tableTrios; track h) {
+                      <div class="flex flex-col items-center">
+                        <div style="width:20px;height:8px;background:rgba(255,255,255,0.3);border-radius:50%;"></div>
+                        <div [style]="'width:16px;height:' + h + 'px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.45);border-radius:0 0 3px 3px;'"></div>
+                      </div>
+                    }
+                  </div>
+                  @if (tableTier()==='trio') {
+                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
+                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    </div>
+                  }
+                  <div class="absolute bottom-0 left-0 right-0 p-3">
+                    <div class="text-xs font-bold text-white">Trio Étagé</div>
+                    <div class="text-[10px] text-white/70">3 présentoirs assortis</div>
+                  </div>
+                </div>
+                <div class="px-4 py-3" [style]="tableTier()==='trio' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
+                  <div class="text-xs font-bold" style="color:#D4AF37;">+450 MAD</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step Nav -->
+          <div class="pt-6 flex items-center justify-between" style="border-top:1px solid rgba(212,175,55,0.12);">
+            <button (click)="customizerStep.set(1)"
+                    class="inline-flex items-center gap-2 text-sm font-semibold rounded-full px-6 py-3 transition-all hover:opacity-80"
+                    style="color:rgba(26,26,26,0.5);border:1px solid rgba(212,175,55,0.2);">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              Retour
+            </button>
+            <button (click)="customizerStep.set(3)"
+                    class="inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-gold-lg"
+                    style="background:#D4AF37;">
+              Continuer
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
           </div>
         </div>
+        }
 
-        <!-- ══ BOOKING FORM ══ -->
-        <div id="book">
-          <div class="text-[10px] font-bold tracking-[0.3em] uppercase mb-2" style="color:#D4AF37;">5 · Réserver votre date</div>
-          <p class="text-xs mb-8" style="color:rgba(26,26,26,0.45);">Remplissez vos coordonnées et nous confirmerons votre réservation sous 24h.</p>
+        <!-- ══ STEP 3: EXTRAS ══ -->
+        @if (customizerStep() === 3) {
+        <div class="space-y-10 animate-fade-up">
+          <div>
+            <h2 class="font-display italic text-3xl mb-2" style="color:#1A1A1A;">Suppléments & Restauration</h2>
+            <p class="text-sm" style="color:rgba(26,26,26,0.45);">Personnalisez davantage votre événement avec nos ajouts premium.</p>
+          </div>
 
-          <div class="rounded-3xl p-8" style="background:rgba(255,255,255,0.75);border:1px solid rgba(212,175,55,0.2);box-shadow:0 24px 64px rgba(212,175,55,0.07);">
+          <!-- PREMIUM ADD-ONS -->
+          <div>
+            <div class="text-[10px] font-bold tracking-[0.3em] uppercase mb-2" style="color:#D4AF37;">Ajouts Décoratifs</div>
+            <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Sélectionnez des éléments supplémentaires pour sublimer votre événement.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              @for (supp of supplements(); track supp.id) {
+                <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
+                     [style]="supp.selected ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
+                     (click)="toggleSupplement(supp.id)">
+                  <!-- Photo area -->
+                  <div class="relative overflow-hidden" style="height:160px;">
+                    <img [src]="supp.image" [alt]="supp.name" class="absolute inset-0 w-full h-full object-cover object-center">
+                    <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.5) 0%,transparent 55%);"></div>
+                    <!-- Emoji icon badge floating on photo -->
+                    <div class="absolute top-3 left-3 w-10 h-10 rounded-xl flex items-center justify-center text-xl"
+                         style="background:rgba(255,255,255,0.18);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.3);">
+                      {{ supp.icon }}
+                    </div>
+                    <!-- Checkbox -->
+                    <div class="absolute top-3 right-3 w-6 h-6 rounded-md flex items-center justify-center"
+                         [style]="supp.selected ? 'background:#D4AF37;' : 'background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.5);backdrop-filter:blur(4px);'">
+                      @if (supp.selected) {
+                        <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                      }
+                    </div>
+                    <!-- Name + price overlay at bottom of photo -->
+                    <div class="absolute bottom-0 left-0 right-0 p-3">
+                      <div class="text-xs font-bold text-white">{{ supp.name }}</div>
+                      <div class="text-[10px] font-bold" style="color:#F0D060;">+{{ supp.price }} MAD</div>
+                    </div>
+                  </div>
+                  <!-- Description strip -->
+                  <div class="px-4 py-3" [style]="supp.selected ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
+                    <div class="text-xs leading-relaxed" style="color:rgba(26,26,26,0.55);">{{ supp.description }}</div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- FOOD / COMING SOON -->
+          <div>
+            <div class="flex items-center gap-3 mb-2">
+              <div class="text-[10px] font-bold tracking-[0.3em] uppercase" style="color:#D4AF37;">Restauration</div>
+              <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[9px] font-bold tracking-widest uppercase" style="background:rgba(212,175,55,0.1);color:#D4AF37;border:1px solid rgba(212,175,55,0.25);">Bientôt disponible</span>
+            </div>
+            <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Notre service de restauration thématique arrive bientôt pour compléter votre événement.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <!-- Cakes -->
+              <div class="relative rounded-2xl p-5 overflow-hidden" style="background:white;border:1px solid rgba(212,175,55,0.12);">
+                <div class="absolute inset-0 flex items-center justify-center z-10" style="background:rgba(253,251,247,0.8);backdrop-filter:blur(2px);">
+                  <div class="text-center">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2" style="background:rgba(212,175,55,0.1);border:1.5px solid rgba(212,175,55,0.25);">
+                      <svg class="w-4 h-4" style="color:rgba(212,175,55,0.7);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <div class="text-[9px] font-bold tracking-[0.2em] uppercase" style="color:#D4AF37;">Bientôt</div>
+                  </div>
+                </div>
+                <div class="text-3xl mb-3">🎂</div>
+                <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">Gâteaux</div>
+                <div class="text-[10px] leading-relaxed" style="color:rgba(26,26,26,0.4);">Gâteaux thématiques et pièces montées sur mesure</div>
+                <div class="mt-2 text-xs font-semibold" style="color:rgba(26,26,26,0.25);">Prix à confirmer</div>
+              </div>
+              <!-- Sweets -->
+              <div class="relative rounded-2xl p-5 overflow-hidden" style="background:white;border:1px solid rgba(212,175,55,0.12);">
+                <div class="absolute inset-0 flex items-center justify-center z-10" style="background:rgba(253,251,247,0.8);backdrop-filter:blur(2px);">
+                  <div class="text-center">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2" style="background:rgba(212,175,55,0.1);border:1.5px solid rgba(212,175,55,0.25);">
+                      <svg class="w-4 h-4" style="color:rgba(212,175,55,0.7);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <div class="text-[9px] font-bold tracking-[0.2em] uppercase" style="color:#D4AF37;">Bientôt</div>
+                  </div>
+                </div>
+                <div class="text-3xl mb-3">🍬</div>
+                <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">Sucré</div>
+                <div class="text-[10px] leading-relaxed" style="color:rgba(26,26,26,0.4);">Desserts fins, macarons et mignardises thématiques</div>
+                <div class="mt-2 text-xs font-semibold" style="color:rgba(26,26,26,0.25);">Prix à confirmer</div>
+              </div>
+              <!-- Savory -->
+              <div class="relative rounded-2xl p-5 overflow-hidden" style="background:white;border:1px solid rgba(212,175,55,0.12);">
+                <div class="absolute inset-0 flex items-center justify-center z-10" style="background:rgba(253,251,247,0.8);backdrop-filter:blur(2px);">
+                  <div class="text-center">
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2" style="background:rgba(212,175,55,0.1);border:1.5px solid rgba(212,175,55,0.25);">
+                      <svg class="w-4 h-4" style="color:rgba(212,175,55,0.7);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </div>
+                    <div class="text-[9px] font-bold tracking-[0.2em] uppercase" style="color:#D4AF37;">Bientôt</div>
+                  </div>
+                </div>
+                <div class="text-3xl mb-3">🧆</div>
+                <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">Salé</div>
+                <div class="text-[10px] leading-relaxed" style="color:rgba(26,26,26,0.4);">Amuse-bouches et buffet salé pour votre réception</div>
+                <div class="mt-2 text-xs font-semibold" style="color:rgba(26,26,26,0.25);">Prix à confirmer</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step Nav -->
+          <div class="pt-6 flex items-center justify-between" style="border-top:1px solid rgba(212,175,55,0.12);">
+            <button (click)="customizerStep.set(2)"
+                    class="inline-flex items-center gap-2 text-sm font-semibold rounded-full px-6 py-3 transition-all hover:opacity-80"
+                    style="color:rgba(26,26,26,0.5);border:1px solid rgba(212,175,55,0.2);">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              Retour
+            </button>
+            <button (click)="customizerStep.set(4)"
+                    class="inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-gold-lg"
+                    style="background:#D4AF37;">
+              Continuer
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        </div>
+        }
+
+        <!-- ══ STEP 4: BOOKING ══ -->
+        @if (customizerStep() === 4) {
+        <div class="animate-fade-up">
+          <div class="mb-8">
+            <h2 class="font-display italic text-3xl mb-2" style="color:#1A1A1A;">Réservez votre date</h2>
+            <p class="text-sm" style="color:rgba(26,26,26,0.45);">Remplissez vos coordonnées et nous confirmerons votre réservation sous 24h.</p>
+          </div>
+
+          <div id="book" class="rounded-3xl p-8" style="background:rgba(255,255,255,0.75);border:1px solid rgba(212,175,55,0.2);box-shadow:0 24px 64px rgba(212,175,55,0.07);">
             @if (!formSubmitted()) {
               <form (ngSubmit)="onFormSubmit()" #bookingForm="ngForm">
                 <input type="hidden" name="_subject" value="Nouvelle réservation — Golden Event">
@@ -719,7 +1031,6 @@ type TableTier = 'none' | 'single' | 'trio';
                 <input type="hidden" name="configuration_tables" [value]="tableLabel()">
                 <input type="hidden" name="ajouts_premium" [value]="selectedSupplementNames()">
                 <input type="hidden" name="total_estime" [value]="estimatedTotal() + ' MAD'">
-
                 <div class="space-y-5">
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
@@ -735,7 +1046,6 @@ type TableTier = 'none' | 'single' | 'trio';
                              style="background:rgba(255,255,255,0.8);border:1px solid rgba(212,175,55,0.22);color:#1A1A1A;outline:none;">
                     </div>
                   </div>
-
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
                     <div>
                       <label class="block text-[10px] tracking-[0.2em] uppercase mb-2" style="color:rgba(26,26,26,0.4);">Date de l'événement</label>
@@ -750,7 +1060,6 @@ type TableTier = 'none' | 'single' | 'trio';
                              style="background:rgba(255,255,255,0.8);border:1px solid rgba(212,175,55,0.22);color:#1A1A1A;outline:none;">
                     </div>
                   </div>
-
                   <div>
                     <label class="block text-[10px] tracking-[0.2em] uppercase mb-2" style="color:rgba(26,26,26,0.4);">Demandes spéciales & Notes</label>
                     <textarea name="notes" [(ngModel)]="bookingData.notes" rows="4"
@@ -758,7 +1067,6 @@ type TableTier = 'none' | 'single' | 'trio';
                               class="w-full px-4 py-3.5 rounded-2xl text-sm resize-none"
                               style="background:rgba(255,255,255,0.8);border:1px solid rgba(212,175,55,0.22);color:#1A1A1A;outline:none;"></textarea>
                   </div>
-
                   <button type="submit"
                           class="group w-full rounded-2xl py-4 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-gold-xl inline-flex items-center justify-center gap-2"
                           style="background:linear-gradient(135deg,#D4AF37,#C4A02A);">
@@ -784,7 +1092,17 @@ type TableTier = 'none' | 'single' | 'trio';
               </div>
             }
           </div>
+
+          <div class="mt-6">
+            <button (click)="customizerStep.set(3)"
+                    class="inline-flex items-center gap-2 text-sm font-semibold rounded-full px-6 py-3 transition-all hover:opacity-80"
+                    style="color:rgba(26,26,26,0.5);border:1px solid rgba(212,175,55,0.2);">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+              Retour aux extras
+            </button>
+          </div>
         </div>
+        }
 
       </div><!-- /left col -->
 
@@ -797,8 +1115,13 @@ type TableTier = 'none' | 'single' | 'trio';
           <!-- Selected theme preview -->
           <div class="rounded-2xl overflow-hidden mb-5">
             <div class="h-28 relative flex items-end"
-                 [style]="'background:linear-gradient(140deg,' + selectedTheme().gradientFrom + ',' + selectedTheme().gradientTo + ');'">
-              <div class="absolute top-0 left-1/2 -translate-x-1/2" style="width:80px;height:60px;border:1.5px solid rgba(255,255,255,0.3);border-top:none;border-radius:0 0 40px 40px;"></div>
+                 [style]="selectedTheme().images.length ? '' : 'background:linear-gradient(140deg,' + selectedTheme().gradientFrom + ',' + selectedTheme().gradientTo + ');'">
+              @if (selectedTheme().images.length) {
+                <img [src]="selectedTheme().images[0]" [alt]="selectedTheme().name" class="absolute inset-0 w-full h-full object-cover object-center">
+                <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.58) 0%,transparent 65%);"></div>
+              } @else {
+                <div class="absolute top-0 left-1/2 -translate-x-1/2" style="width:80px;height:60px;border:1.5px solid rgba(255,255,255,0.3);border-top:none;border-radius:0 0 40px 40px;"></div>
+              }
               <div class="relative z-10 p-4">
                 <div class="text-[9px] font-bold tracking-widest uppercase" style="color:rgba(255,255,255,0.65);">Thème sélectionné</div>
                 <div class="text-sm font-bold" style="color:white;">{{ selectedTheme().name }}</div>
@@ -946,8 +1269,11 @@ export class AppComponent {
   readonly tableTrios = [26, 34, 22];
 
   // ── Signals ───────────────────────────────────────────────────
-  currentView     = signal<ViewType>('home');
-  activeTab       = signal<string>('baby-shower');
+  currentView       = signal<ViewType>('home');
+  customizerStep    = signal<number>(1);
+  detailImageIndex  = signal<number>(0);
+  cardImageIndices  = signal<{[id: string]: number}>({});
+  activeTab         = signal<string>('baby-shower');
   selectedThemeId = signal<string>('little-princesse');
   mobileMenuOpen  = signal<boolean>(false);
   formSubmitted   = signal<boolean>(false);
@@ -957,15 +1283,22 @@ export class AppComponent {
   tableTier       = signal<TableTier>('none');
 
   supplements = signal<Supplement[]>([
-    { id: 'macaron', icon: '🧁', name: 'Tour de Macarons', description: 'Macarons colorés sur présentoir étagé en cristal', price: 200, selected: false },
-    { id: 'neon',    icon: '✨', name: 'Enseigne Néon sur Mesure', description: 'LED néon avec prénom, phrase ou initiales du bébé', price: 400, selected: false },
-    { id: 'candy',   icon: '🍬', name: 'Bar à Bonbons Premium', description: 'Bocaux thématiques, présentoirs et emballages personnalisés', price: 180, selected: false },
-    { id: 'florals', icon: '💐', name: 'Arrangements Floraux Luxe', description: 'Fleurs fraîches ou en soie dans les teintes du thème', price: 350, selected: false },
+    { id: 'macaron', icon: '🧁', name: 'Tour de Macarons', description: 'Macarons colorés sur présentoir étagé en cristal', price: 200, selected: false, image: 'assets/images/buffet3.jpeg' },
+    { id: 'neon',    icon: '✨', name: 'Enseigne Néon sur Mesure', description: 'LED néon avec prénom, phrase ou initiales du bébé', price: 400, selected: false, image: 'assets/images/buffet1.jpeg' },
+    { id: 'candy',   icon: '🍬', name: 'Bar à Bonbons Premium', description: 'Bocaux thématiques, présentoirs et emballages personnalisés', price: 180, selected: false, image: 'assets/images/buffet4.jpeg' },
+    { id: 'florals', icon: '💐', name: 'Arrangements Floraux Luxe', description: 'Fleurs fraîches ou en soie dans les teintes du thème', price: 350, selected: false, image: 'assets/images/buffet5.jpeg' },
   ]);
 
   bookingData: BookingData = { fullName: '', phone: '+212 ', eventDate: '', eventHour: '', baseTheme: 'little-princesse', notes: '' };
 
   // ── Static data ───────────────────────────────────────────────
+  customizerSteps = [
+    { n: 1, label: 'Thème' },
+    { n: 2, label: 'Installation' },
+    { n: 3, label: 'Extras' },
+    { n: 4, label: 'Réserver' },
+  ];
+
   tabs = [
     { id: 'baby-shower', label: 'Baby Shower' },
     { id: 'birthday',    label: 'Anniversaires' },
@@ -1015,6 +1348,7 @@ export class AppComponent {
         'Installation, montage et démontage inclus',
       ],
       palette: [{ name: 'Blush', hex: '#FFB6C1' }, { name: 'Perle', hex: '#F9F0F3' }, { name: 'Or', hex: '#D4AF37' }, { name: 'Rose', hex: '#E8A0B0' }],
+      images: ['assets/images/buffet5.jpeg', 'assets/images/buffet6.jpeg'],
       testimonialQuotes: [
         { name: 'Fatima Z.', location: 'Meknès', event: 'Baby Shower', quote: 'L\'arche rose et or était absolument magnifique. Toutes les invitées se prenaient en photo devant. La qualité est vraiment premium — j\'ai été époustouflée dès l\'entrée.' },
         { name: 'Hasna R.', location: 'Meknès', event: 'Baby Shower', quote: 'La peluche géante avec le ruban rose était à croquer. Ma fille en parle encore six mois après. Khaoula a compris exactement ce que je voulais dès la première consultation.' },
@@ -1041,6 +1375,7 @@ export class AppComponent {
         'Installation, montage et démontage inclus',
       ],
       palette: [{ name: 'Beige', hex: '#F5E6C8' }, { name: 'Crème', hex: '#FFF8F0' }, { name: 'Caramel', hex: '#C49A6C' }, { name: 'Sable', hex: '#C2A47E' }],
+      images: ['assets/images/buffet4.jpeg', 'assets/images/buffet3.jpeg'],
       testimonialQuotes: [
         { name: 'Leila M.', location: 'Rabat', event: 'Baby Shower', quote: 'C\'était exactement l\'ambiance intime et chaleureuse que je recherchais. Les tons neutres se mariaient parfaitement avec notre intérieur. Mes invitées ont adoré le style épuré.' },
         { name: 'Yasmina O.', location: 'Salé', event: 'Baby Shower', quote: 'La signalétique en bois avec le prénom de mon fils était un détail magnifique que nous avons gardé dans sa chambre. Tout était coordonné avec une attention rare aux détails.' },
@@ -1067,6 +1402,7 @@ export class AppComponent {
         'Installation, montage et démontage inclus',
       ],
       palette: [{ name: 'Royal', hex: '#4169E1' }, { name: 'Ciel', hex: '#87CEEB' }, { name: 'Blanc', hex: '#F0F4FF' }, { name: 'Or', hex: '#D4AF37' }],
+      images: ['assets/images/buffet2.jpeg', 'assets/images/buffet7.jpeg'],
       testimonialQuotes: [
         { name: 'Nadia B.', location: 'Fès', event: 'Baby Shower', quote: 'L\'arche bleu royal était majestueuse. Mon fils portait une petite couronne assortie — les photos sont dignes d\'un magazine. Le service était ponctuel et extrêmement soigné.' },
         { name: 'Houda K.', location: 'Meknès', event: 'Baby Shower', quote: 'La qualité des ballons et la cohérence des couleurs étaient remarquables. Khaoula a su créer un univers royal sans tomber dans le trop chargé. Parfaitement équilibré.' },
@@ -1093,6 +1429,7 @@ export class AppComponent {
         'Installation, montage et démontage inclus',
       ],
       palette: [{ name: 'Ivoire', hex: '#FFFFF0' }, { name: 'Or', hex: '#C9B037' }, { name: 'Blush', hex: '#FADADD' }, { name: 'Champagne', hex: '#F7E7CE' }],
+      images: [],
       testimonialQuotes: [
         { name: 'Sara K.', location: 'Casablanca', event: '1er Anniversaire', quote: 'Le ballon "1" géant en or était la pièce centrale parfaite pour les photos. Mon fils a adoré le toucher. Les invités n\'arrêtaient pas de complimenter la qualité de la décoration.' },
         { name: 'Ghita P.', location: 'Rabat', event: '1er Anniversaire', quote: 'La couronne florale fraîche pour ma fille était adorable et les photos cake-smash sont mes préférées de toute sa première année. Service impeccable et livraison exactement à l\'heure.' },
@@ -1119,6 +1456,7 @@ export class AppComponent {
         'Installation, montage et démontage inclus',
       ],
       palette: [{ name: 'Or', hex: '#D4AF37' }, { name: 'Corail', hex: '#FF6B6B' }, { name: 'Jade', hex: '#4ECDC4' }, { name: 'Citron', hex: '#FFE66D' }],
+      images: [],
       testimonialQuotes: [
         { name: 'Rania M.', location: 'Meknès', event: 'Anniversaire 4 ans', quote: 'Ma fille voulait une fête "licorne arc-en-ciel" et Khaoula a créé quelque chose de magique au-delà de tout ce qu\'on aurait pu imaginer. Chaque couleur était parfaitement dosée.' },
         { name: 'Khadija S.', location: 'Meknès', event: 'Anniversaire 7 ans', quote: 'Le thème "jungle safari" que nous avons choisi était rendu avec un niveau de détail professionnel. Les girafes en ballon et les feuilles tropicales étaient bluffants.' },
@@ -1145,6 +1483,7 @@ export class AppComponent {
         'Installation, montage et démontage inclus',
       ],
       palette: [{ name: 'Or Profond', hex: '#B8860B' }, { name: 'Ivoire', hex: '#FFFFF0' }, { name: 'Bordeaux', hex: '#800020' }, { name: 'Bronze', hex: '#CD7F32' }],
+      images: ['assets/images/buffet1.jpeg'],
       testimonialQuotes: [
         { name: 'Amira H.', location: 'Meknès', event: 'Soirée Henna', quote: 'C\'était exactement la fusion tradition-modernité que je rêvais. L\'enseigne néon avec mon prénom en calligraphie arabe était un chef-d\'œuvre. Toutes les invitées ont été éblouies.' },
         { name: 'Soukaina L.', location: 'Meknès', event: 'Anniversaire de Mariage', quote: 'Les drapés dorés et les tables en mosaïque créaient une atmosphère digne d\'un palais marocain. Notre 10ème anniversaire de mariage a été célébré comme il se doit.' },
@@ -1185,6 +1524,7 @@ export class AppComponent {
   }
 
   goTo(view: ViewType): void {
+    if (view === 'customizer') this.customizerStep.set(1);
     this.currentView.set(view);
     this.mobileMenuOpen.set(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -1195,8 +1535,34 @@ export class AppComponent {
     this.bookingData.baseTheme = themeId;
     const theme = this.allThemes.find(t => t.id === themeId);
     if (theme) this.activeTab.set(theme.tab);
+    this.detailImageIndex.set(0);
     this.currentView.set('detail');
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  nextDetailImage(): void {
+    const imgs = this.selectedTheme().images;
+    if (imgs.length > 1) this.detailImageIndex.update(i => (i + 1) % imgs.length);
+  }
+  prevDetailImage(): void {
+    const imgs = this.selectedTheme().images;
+    if (imgs.length > 1) this.detailImageIndex.update(i => (i - 1 + imgs.length) % imgs.length);
+  }
+
+  getCardImg(themeId: string): number {
+    return this.cardImageIndices()[themeId] ?? 0;
+  }
+  setCardImg(themeId: string, idx: number, event: Event): void {
+    event.stopPropagation();
+    this.cardImageIndices.update(m => ({ ...m, [themeId]: idx }));
+  }
+  nextCardImg(themeId: string, len: number, event: Event): void {
+    event.stopPropagation();
+    this.cardImageIndices.update(m => ({ ...m, [themeId]: ((m[themeId] ?? 0) + 1) % len }));
+  }
+  prevCardImg(themeId: string, len: number, event: Event): void {
+    event.stopPropagation();
+    this.cardImageIndices.update(m => ({ ...m, [themeId]: ((m[themeId] ?? 0) - 1 + len) % len }));
   }
 
   selectTheme(themeId: string): void {
@@ -1227,8 +1593,8 @@ export class AppComponent {
   }
 
   scrollToBook(): void {
-    const el = document.getElementById('book');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    this.customizerStep.set(4);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   toggleSupplement(id: string): void {
