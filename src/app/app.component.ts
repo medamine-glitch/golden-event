@@ -2,7 +2,7 @@ import { Component, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
-interface Supplement { id: string; name: string; description: string; price: number; selected: boolean; icon: string; image: string; }
+interface Supplement { id: string; name: string; description: string; price: number; selected: boolean; icon: string; image: string; tab: string; images?: string[]; }
 interface ColorSwatch { name: string; hex: string; }
 interface TestimonialQuote { name: string; location: string; event: string; quote: string; }
 interface FaqItem { id: string; q: string; a: string; }
@@ -199,7 +199,7 @@ type TableTier = 'none' | 'single' | 'trio';
             class="card-trace rounded-3xl overflow-hidden cursor-pointer flex flex-col"
             [class]="i === 0 ? 'md:col-span-2 md:row-span-2' : ''"
             [class.selected]="selectedThemeId() === theme.id"
-            [style]="selectedThemeId()===theme.id ? 'background:white;border:2px solid #D4AF37;' : 'background:rgba(255,255,255,0.75);border:1px solid rgba(212,175,55,0.14);'"
+            [style]="selectedThemeId()===theme.id ? 'background:white;outline:2px solid #D4AF37;outline-offset:-2px;box-shadow:0 8px 32px rgba(212,175,55,0.16);' : 'background:rgba(255,255,255,0.75);outline:1px solid rgba(212,175,55,0.14);'"
             (click)="selectTheme(theme.id)"
           >
             <!-- Visual panel -->
@@ -237,7 +237,6 @@ type TableTier = 'none' | 'single' | 'trio';
                     <div class="rounded-full ring-2 ring-white shadow" [style]="'width:' + (i===0?'28px':'22px') + ';height:' + (i===0?'28px':'22px') + ';background:' + sw.hex + ';'" [title]="sw.name"></div>
                   }
                 </div>
-                <div class="rounded-full px-3 py-1 text-xs font-bold" style="background:rgba(253,251,247,0.92);color:#1A1A1A;">{{ theme.basePrice }} MAD</div>
               </div>
             </div>
 
@@ -460,8 +459,6 @@ type TableTier = 'none' | 'single' | 'trio';
         <!-- Panel 3: Price + CTA card -->
         <div class="rounded-3xl p-7 flex flex-col justify-between" style="background:rgba(212,175,55,0.06);border:1.5px solid rgba(212,175,55,0.25);min-height:190px;">
           <div>
-            <div class="text-[9px] tracking-[0.25em] uppercase mb-2" style="color:rgba(26,26,26,0.35);">À partir de</div>
-            <div class="font-display italic text-4xl" style="color:#D4AF37;">{{ selectedTheme().basePrice }} <span class="text-2xl">MAD</span></div>
           </div>
           <button (click)="goTo('customizer')"
                   class="mt-6 w-full rounded-2xl py-3.5 text-sm font-bold text-white transition-all hover:-translate-y-0.5 hover:shadow-gold-lg"
@@ -518,7 +515,6 @@ type TableTier = 'none' | 'single' | 'trio';
     <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
       <div>
         <div class="font-display italic text-xl" style="color:#1A1A1A;">{{ selectedTheme().name }}</div>
-        <div class="text-xs" style="color:rgba(26,26,26,0.4);">À partir de <span class="font-bold" style="color:#D4AF37;">{{ selectedTheme().basePrice }} MAD</span></div>
       </div>
       <button (click)="goTo('customizer')"
               class="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-bold text-white transition-all hover:-translate-y-px hover:shadow-gold-lg"
@@ -593,90 +589,65 @@ type TableTier = 'none' | 'single' | 'trio';
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
             @for (theme of filteredThemes(); track theme.id) {
-              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200 flex flex-col"
-                   [style]="selectedThemeId()===theme.id ? 'background:white;border:2px solid #D4AF37;box-shadow:0 8px 32px rgba(212,175,55,0.18);' : 'background:white;border:1px solid rgba(212,175,55,0.16);'"
-                   (click)="selectTheme(theme.id)">
+              <div class="ge-card" [class.ge-card--selected]="selectedThemeId()===theme.id" (click)="selectTheme(theme.id)">
 
-                <!-- Photo area with mini carousel -->
-                <div class="relative overflow-hidden" style="height:220px;">
+                <!-- Visual zone: 250px photo with carousel -->
+                <div class="ge-card__visual" style="height:250px;">
                   @if (theme.images.length) {
                     @for (img of theme.images; track $index) {
-                      <img [src]="img" [alt]="theme.name + ' photo ' + ($index + 1)"
-                           class="absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-400"
-                           [style]="'opacity:' + (getCardImg(theme.id) === $index ? '1' : '0') + ';'">
+                      <img [src]="img" [alt]="theme.name" class="ge-card__img"
+                           [style]="'opacity:' + (getCardImg(theme.id) === $index ? '1' : '0') + ';transition:opacity 0.35s;'">
                     }
-                    <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.48) 0%,transparent 55%);"></div>
-                    <!-- Arrows if multiple images -->
+                    <div class="ge-card__overlay"></div>
                     @if (theme.images.length > 1) {
-                      <button (click)="prevCardImg(theme.id, theme.images.length, $event)"
-                              class="absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-105"
-                              style="background:rgba(255,255,255,0.2);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.3);color:white;">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                      <button class="ge-card__nav ge-card__nav--prev" (click)="prevCardImg(theme.id, theme.images.length, $event)">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
                       </button>
-                      <button (click)="nextCardImg(theme.id, theme.images.length, $event)"
-                              class="absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:scale-105"
-                              style="background:rgba(255,255,255,0.2);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.3);color:white;">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                      <button class="ge-card__nav ge-card__nav--next" (click)="nextCardImg(theme.id, theme.images.length, $event)">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
                       </button>
-                      <!-- Dots -->
-                      <div class="absolute bottom-3 left-1/2 -translate-x-1/2 z-20 flex gap-1.5">
+                      <div class="ge-card__dots">
                         @for (img of theme.images; track $index) {
-                          <button (click)="setCardImg(theme.id, $index, $event)"
-                                  class="rounded-full transition-all duration-200"
-                                  [style]="getCardImg(theme.id) === $index ? 'width:18px;height:4px;background:white;' : 'width:4px;height:4px;background:rgba(255,255,255,0.5);'">
-                          </button>
+                          <button class="ge-card__dot" [class.ge-card__dot--active]="getCardImg(theme.id)===$index"
+                                  (click)="setCardImg(theme.id, $index, $event)"></button>
                         }
                       </div>
                     }
                   } @else {
-                    <!-- Gradient fallback -->
                     <div class="absolute inset-0" [style]="'background:linear-gradient(140deg,' + theme.gradientFrom + ',' + theme.gradientTo + ');'"></div>
-                    <div class="absolute top-0 left-1/2 -translate-x-1/2" style="width:120px;height:90px;border:1.5px solid rgba(255,255,255,0.3);border-top:none;border-radius:0 0 60px 60px;"></div>
+                    <div class="ge-card__overlay"></div>
                   }
-                  <!-- Selected checkmark -->
+                  @if (theme.badge) { <div class="ge-card__badge">{{ theme.badge }}</div> }
                   @if (selectedThemeId()===theme.id) {
-                    <div class="absolute top-3 right-3 w-7 h-7 rounded-full flex items-center justify-center z-20" style="background:#D4AF37;box-shadow:0 2px 8px rgba(212,175,55,0.5);">
-                      <svg class="w-3.5 h-3.5 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                    <div class="ge-card__check">
+                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                     </div>
                   }
-                  @if (theme.badge) {
-                    <div class="absolute top-3 left-3 z-20 rounded-full px-2.5 py-0.5 text-[9px] font-black tracking-widest uppercase text-white" style="background:#D4AF37;">{{ theme.badge }}</div>
-                  }
-                  <!-- Theme name over photo -->
-                  <div class="absolute bottom-0 left-0 right-0 z-10 p-4">
-                    <div class="text-sm font-bold leading-tight" style="color:white;text-shadow:0 1px 4px rgba(0,0,0,0.5);">{{ theme.name }}</div>
-                    <div class="text-[10px] mt-0.5 font-bold" style="color:rgba(255,255,255,0.8);">{{ theme.basePrice }} MAD</div>
+                  <div class="ge-card__bottom">
+                    <div class="text-sm font-bold text-white leading-tight">{{ theme.name }}</div>
                   </div>
                 </div>
 
-                <!-- Card body -->
-                <div class="p-4 flex flex-col flex-1">
-                  <p class="text-xs leading-relaxed mb-3 line-clamp-2" style="color:rgba(26,26,26,0.55);">{{ theme.description }}</p>
-                  <!-- Colour palette dots -->
-                  <div class="flex gap-1.5 mb-3">
+                <!-- Body zone -->
+                <div class="ge-card__body">
+                  <div class="ge-card__kicker">{{ theme.subtitle }}</div>
+                  <p class="ge-card__desc">{{ theme.description }}</p>
+                  <div class="ge-card__palette">
                     @for (sw of theme.palette; track sw.name) {
-                      <div class="w-4 h-4 rounded-full ring-1 ring-white shadow-sm" [style]="'background:' + sw.hex + ';'" [title]="sw.name"></div>
+                      <div class="ge-card__swatch" [style]="'background:' + sw.hex + ';'" [title]="sw.name"></div>
                     }
                   </div>
-                  <!-- Top 2 highlights -->
-                  <div class="space-y-1 mb-4">
+                  <div class="ge-card__feats">
                     @for (feat of theme.highlights.slice(0,2); track feat) {
-                      <div class="flex items-center gap-1.5 text-[10px]" style="color:rgba(26,26,26,0.6);">
+                      <div class="ge-card__feat">
                         <svg class="w-3 h-3 flex-shrink-0" style="color:#D4AF37;" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
                         {{ feat }}
                       </div>
                     }
                   </div>
-                  <!-- Action buttons -->
-                  <div class="flex gap-2 mt-auto">
-                    <button (click)="$event.stopPropagation();openDetail(theme.id)"
-                            class="flex-1 rounded-xl py-2 text-[10px] font-bold tracking-wide uppercase transition-all hover:-translate-y-px"
-                            style="border:1.5px solid rgba(212,175,55,0.35);color:#D4AF37;background:transparent;">
-                      Détails
-                    </button>
-                    <button (click)="$event.stopPropagation();selectTheme(theme.id)"
-                            class="flex-1 rounded-xl py-2 text-[10px] font-bold tracking-wide uppercase text-white transition-all hover:-translate-y-px"
-                            [style]="selectedThemeId()===theme.id ? 'background:#D4AF37;' : 'background:rgba(212,175,55,0.7);'">
+                  <div class="ge-card__actions">
+                    <button class="ge-card__btn ge-card__btn--ghost" (click)="$event.stopPropagation();openDetail(theme.id)">Détails</button>
+                    <button class="ge-card__btn ge-card__btn--gold" (click)="$event.stopPropagation();selectTheme(theme.id)">
                       {{ selectedThemeId()===theme.id ? '✓ Sélectionné' : 'Choisir' }}
                     </button>
                   </div>
@@ -709,78 +680,36 @@ type TableTier = 'none' | 'single' | 'trio';
             <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Choisissez le nombre d'arches décoratifs pour votre installation.</p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <!-- 1 Arche -->
-              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
-                   [style]="backdropTier()==='standard' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
-                   (click)="backdropTier.set('standard')">
-                <div class="relative overflow-hidden" style="height:160px;">
-                  <img src="assets/images/buffet5.jpeg" alt="1 arche décoration" class="absolute inset-0 w-full h-full object-cover object-center">
-                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
-                  <!-- arch CSS overlay -->
-                  <div class="absolute top-4 left-1/2 -translate-x-1/2" style="width:64px;height:56px;border:2.5px solid rgba(255,255,255,0.55);border-top:none;border-radius:0 0 32px 32px;"></div>
-                  @if (backdropTier()==='standard') {
-                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
-                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                  }
-                  <div class="absolute bottom-0 left-0 right-0 p-3">
-                    <div class="text-xs font-bold text-white">1 Arche</div>
-                    <div class="text-[10px] text-white/70">Standard — Inclus</div>
-                  </div>
+              <div class="ge-card" [class.ge-card--selected]="backdropTier()==='standard'" (click)="backdropTier.set('standard')">
+                <div class="ge-card__visual" style="height:170px;">
+                  <img src="assets/images/supplement/babyshower/babyshower.jpg" alt="1 arche" class="ge-card__img">
+                  <div class="ge-card__overlay"></div>
+                  @if (backdropTier()==='standard') { <div class="ge-card__check"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div> }
+                  <div class="ge-card__bottom"><div class="text-xs font-bold text-white">1 Arche</div><div class="text-[10px] text-white/70">Standard</div></div>
                 </div>
-                <div class="px-4 py-3" [style]="backdropTier()==='standard' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
-                  <div class="text-xs font-semibold" style="color:rgba(26,26,26,0.35);">+0 MAD</div>
+                <div class="ge-card__strip" [class.ge-card__strip--gold]="backdropTier()==='standard'">
+                  <span class="ge-card__price--muted">Inclus</span>
                 </div>
               </div>
               <!-- 2 Arches -->
-              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
-                   [style]="backdropTier()==='double' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
-                   (click)="backdropTier.set('double')">
-                <div class="relative overflow-hidden" style="height:160px;">
-                  <img src="assets/images/buffet2.jpeg" alt="2 arches décoration" class="absolute inset-0 w-full h-full object-cover object-center">
-                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
-                  <div class="absolute top-4 left-1/2 -translate-x-1/2 flex gap-3">
-                    <div style="width:44px;height:44px;border:2.5px solid rgba(255,255,255,0.55);border-top:none;border-radius:0 0 22px 22px;"></div>
-                    <div style="width:44px;height:44px;border:2.5px solid rgba(255,255,255,0.55);border-top:none;border-radius:0 0 22px 22px;"></div>
-                  </div>
-                  @if (backdropTier()==='double') {
-                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
-                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                  }
-                  <div class="absolute bottom-0 left-0 right-0 p-3">
-                    <div class="text-xs font-bold text-white">2 Arches</div>
-                    <div class="text-[10px] text-white/70">Double installation</div>
-                  </div>
+              <div class="ge-card" [class.ge-card--selected]="backdropTier()==='double'" (click)="backdropTier.set('double')">
+                <div class="ge-card__visual" style="height:170px;">
+                  <img src="assets/images/supplement/hennePic/supphenne8.jpg" alt="2 arches" class="ge-card__img">
+                  <div class="ge-card__overlay"></div>
+                  @if (backdropTier()==='double') { <div class="ge-card__check"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div> }
+                  <div class="ge-card__bottom"><div class="text-xs font-bold text-white">2 Arches</div><div class="text-[10px] text-white/70">Double installation</div></div>
                 </div>
-                <div class="px-4 py-3" [style]="backdropTier()==='double' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
-                  <div class="text-xs font-bold" style="color:#D4AF37;">+300 MAD</div>
-                </div>
+                <div class="ge-card__strip" [class.ge-card__strip--gold]="backdropTier()==='double'"></div>
               </div>
               <!-- Trio -->
-              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
-                   [style]="backdropTier()==='trio' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
-                   (click)="backdropTier.set('trio')">
-                <div class="relative overflow-hidden" style="height:160px;">
-                  <img src="assets/images/buffet1.jpeg" alt="trio arches décoration" class="absolute inset-0 w-full h-full object-cover object-center">
-                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
-                  <div class="absolute top-4 left-1/2 -translate-x-1/2 flex items-end" style="gap:6px;">
-                    <div style="width:36px;height:38px;border:2px solid rgba(255,255,255,0.4);border-top:none;border-radius:0 0 18px 18px;"></div>
-                    <div style="width:46px;height:48px;border:2.5px solid rgba(255,255,255,0.65);border-top:none;border-radius:0 0 23px 23px;"></div>
-                    <div style="width:36px;height:38px;border:2px solid rgba(255,255,255,0.4);border-top:none;border-radius:0 0 18px 18px;"></div>
-                  </div>
-                  @if (backdropTier()==='trio') {
-                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
-                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                  }
-                  <div class="absolute bottom-0 left-0 right-0 p-3">
-                    <div class="text-xs font-bold text-white">Trio Duo-Arch</div>
-                    <div class="text-[10px] text-white/70">3 arches chevauchés</div>
-                  </div>
+              <div class="ge-card" [class.ge-card--selected]="backdropTier()==='trio'" (click)="backdropTier.set('trio')">
+                <div class="ge-card__visual" style="height:170px;">
+                  <img src="assets/images/supplement/hennePic/supphenne9.jpg" alt="trio arches" class="ge-card__img">
+                  <div class="ge-card__overlay"></div>
+                  @if (backdropTier()==='trio') { <div class="ge-card__check"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div> }
+                  <div class="ge-card__bottom"><div class="text-xs font-bold text-white">Trio Duo-Arch</div><div class="text-[10px] text-white/70">3 arches chevauchés</div></div>
                 </div>
-                <div class="px-4 py-3" [style]="backdropTier()==='trio' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
-                  <div class="text-xs font-bold" style="color:#D4AF37;">+550 MAD</div>
-                </div>
+                <div class="ge-card__strip" [class.ge-card__strip--gold]="backdropTier()==='trio'"></div>
               </div>
             </div>
           </div>
@@ -791,85 +720,36 @@ type TableTier = 'none' | 'single' | 'trio';
             <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Choisissez la configuration de tables assorties à votre thème.</p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <!-- Sans table -->
-              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
-                   [style]="tableTier()==='none' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
-                   (click)="tableTier.set('none')">
-                <div class="relative overflow-hidden" style="height:160px;">
-                  <img src="assets/images/buffet4.jpeg" alt="sans table" class="absolute inset-0 w-full h-full object-cover object-center">
-                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
-                  <!-- X icon overlay -->
-                  <div class="absolute top-4 left-1/2 -translate-x-1/2 w-12 h-12 rounded-full flex items-center justify-center" style="background:rgba(255,255,255,0.18);backdrop-filter:blur(4px);border:1.5px solid rgba(255,255,255,0.4);">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-                  </div>
-                  @if (tableTier()==='none') {
-                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
-                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                  }
-                  <div class="absolute bottom-0 left-0 right-0 p-3">
-                    <div class="text-xs font-bold text-white">Sans table</div>
-                    <div class="text-[10px] text-white/70">Configuration standard</div>
-                  </div>
+              <div class="ge-card" [class.ge-card--selected]="tableTier()==='none'" (click)="tableTier.set('none')">
+                <div class="ge-card__visual" style="height:170px;">
+                  <img src="assets/images/supplement/babyshower/babyshower3.jpg" alt="sans table" class="ge-card__img">
+                  <div class="ge-card__overlay"></div>
+                  @if (tableTier()==='none') { <div class="ge-card__check"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div> }
+                  <div class="ge-card__bottom"><div class="text-xs font-bold text-white">Sans table</div><div class="text-[10px] text-white/70">Standard</div></div>
                 </div>
-                <div class="px-4 py-3" [style]="tableTier()==='none' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
-                  <div class="text-xs font-semibold" style="color:rgba(26,26,26,0.35);">+0 MAD</div>
+                <div class="ge-card__strip" [class.ge-card__strip--gold]="tableTier()==='none'">
+                  <span class="ge-card__price--muted">Inclus</span>
                 </div>
               </div>
               <!-- Table Solo -->
-              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
-                   [style]="tableTier()==='single' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
-                   (click)="tableTier.set('single')">
-                <div class="relative overflow-hidden" style="height:160px;">
-                  <img src="assets/images/buffet7.jpeg" alt="table solo" class="absolute inset-0 w-full h-full object-cover object-center">
-                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
-                  <!-- cylinder overlay -->
-                  <div class="absolute top-4 left-1/2 -translate-x-1/2 flex flex-col items-center">
-                    <div style="width:36px;height:12px;background:rgba(255,255,255,0.3);border-radius:50%;"></div>
-                    <div style="width:30px;height:42px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.45);border-radius:0 0 4px 4px;"></div>
-                  </div>
-                  @if (tableTier()==='single') {
-                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
-                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                  }
-                  <div class="absolute bottom-0 left-0 right-0 p-3">
-                    <div class="text-xs font-bold text-white">Table Solo</div>
-                    <div class="text-[10px] text-white/70">Présentoir cylindrique</div>
-                  </div>
+              <div class="ge-card" [class.ge-card--selected]="tableTier()==='single'" (click)="tableTier.set('single')">
+                <div class="ge-card__visual" style="height:170px;">
+                  <img src="assets/images/supplement/hennePic/supphenne10.jpg" alt="table solo" class="ge-card__img">
+                  <div class="ge-card__overlay"></div>
+                  @if (tableTier()==='single') { <div class="ge-card__check"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div> }
+                  <div class="ge-card__bottom"><div class="text-xs font-bold text-white">Table Solo</div><div class="text-[10px] text-white/70">Présentoir cylindrique</div></div>
                 </div>
-                <div class="px-4 py-3" [style]="tableTier()==='single' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
-                  <div class="text-xs font-bold" style="color:#D4AF37;">+250 MAD</div>
-                </div>
+                <div class="ge-card__strip" [class.ge-card__strip--gold]="tableTier()==='single'"></div>
               </div>
               <!-- Trio Étagé -->
-              <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
-                   [style]="tableTier()==='trio' ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
-                   (click)="tableTier.set('trio')">
-                <div class="relative overflow-hidden" style="height:160px;">
-                  <img src="assets/images/buffet6.jpeg" alt="trio étagé" class="absolute inset-0 w-full h-full object-cover object-center">
-                  <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 55%);"></div>
-                  <!-- trio cylinders overlay -->
-                  <div class="absolute top-4 left-1/2 -translate-x-1/2 flex items-end" style="gap:5px;">
-                    @for (h of tableTrios; track h) {
-                      <div class="flex flex-col items-center">
-                        <div style="width:20px;height:8px;background:rgba(255,255,255,0.3);border-radius:50%;"></div>
-                        <div [style]="'width:16px;height:' + h + 'px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.45);border-radius:0 0 3px 3px;'"></div>
-                      </div>
-                    }
-                  </div>
-                  @if (tableTier()==='trio') {
-                    <div class="absolute top-2 right-2 w-6 h-6 rounded-full flex items-center justify-center z-10" style="background:#D4AF37;">
-                      <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
-                    </div>
-                  }
-                  <div class="absolute bottom-0 left-0 right-0 p-3">
-                    <div class="text-xs font-bold text-white">Trio Étagé</div>
-                    <div class="text-[10px] text-white/70">3 présentoirs assortis</div>
-                  </div>
+              <div class="ge-card" [class.ge-card--selected]="tableTier()==='trio'" (click)="tableTier.set('trio')">
+                <div class="ge-card__visual" style="height:170px;">
+                  <img src="assets/images/supplement/hennePic/supphenne11.jpg" alt="trio étagé" class="ge-card__img">
+                  <div class="ge-card__overlay"></div>
+                  @if (tableTier()==='trio') { <div class="ge-card__check"><svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg></div> }
+                  <div class="ge-card__bottom"><div class="text-xs font-bold text-white">Trio Étagé</div><div class="text-[10px] text-white/70">3 présentoirs assortis</div></div>
                 </div>
-                <div class="px-4 py-3" [style]="tableTier()==='trio' ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
-                  <div class="text-xs font-bold" style="color:#D4AF37;">+450 MAD</div>
-                </div>
+                <div class="ge-card__strip" [class.ge-card__strip--gold]="tableTier()==='trio'"></div>
               </div>
             </div>
           </div>
@@ -905,35 +785,43 @@ type TableTier = 'none' | 'single' | 'trio';
             <div class="text-[10px] font-bold tracking-[0.3em] uppercase mb-2" style="color:#D4AF37;">Ajouts Décoratifs</div>
             <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Sélectionnez des éléments supplémentaires pour sublimer votre événement.</p>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              @for (supp of supplements(); track supp.id) {
-                <div class="rounded-2xl overflow-hidden cursor-pointer transition-all duration-200"
-                     [style]="supp.selected ? 'border:2px solid #D4AF37;box-shadow:0 6px 24px rgba(212,175,55,0.18);' : 'border:1px solid rgba(212,175,55,0.16);'"
-                     (click)="toggleSupplement(supp.id)">
-                  <!-- Photo area -->
-                  <div class="relative overflow-hidden" style="height:160px;">
-                    <img [src]="supp.image" [alt]="supp.name" class="absolute inset-0 w-full h-full object-cover object-center">
-                    <div class="absolute inset-0" style="background:linear-gradient(to top,rgba(0,0,0,0.5) 0%,transparent 55%);"></div>
-                    <!-- Emoji icon badge floating on photo -->
-                    <div class="absolute top-3 left-3 w-10 h-10 rounded-xl flex items-center justify-center text-xl"
-                         style="background:rgba(255,255,255,0.18);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.3);">
-                      {{ supp.icon }}
-                    </div>
-                    <!-- Checkbox -->
-                    <div class="absolute top-3 right-3 w-6 h-6 rounded-md flex items-center justify-center"
+              @for (supp of filteredSupplements(); track supp.id) {
+                <div class="ge-card" [class.ge-card--selected]="supp.selected" (click)="toggleSupplement(supp.id)">
+                  <div class="ge-card__visual" style="height:270px;">
+                    @if ((supp.images?.length ?? 0) > 1) {
+                      @for (img of supp.images!; track $index) {
+                        <img [src]="img" [alt]="supp.name" class="ge-card__img"
+                             [style]="'opacity:' + (getCardImg(supp.id) === $index ? '1' : '0') + ';transition:opacity 0.35s;'">
+                      }
+                      <button class="ge-card__nav ge-card__nav--prev" (click)="prevCardImg(supp.id, supp.images!.length, $event)">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+                      </button>
+                      <button class="ge-card__nav ge-card__nav--next" (click)="nextCardImg(supp.id, supp.images!.length, $event)">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+                      </button>
+                      <div class="ge-card__dots">
+                        @for (img of supp.images!; track $index) {
+                          <button class="ge-card__dot" [class.ge-card__dot--active]="getCardImg(supp.id)===$index"
+                                  (click)="setCardImg(supp.id, $index, $event)"></button>
+                        }
+                      </div>
+                    } @else {
+                      <img [src]="supp.image" [alt]="supp.name" class="ge-card__img">
+                    }
+                    <div class="ge-card__overlay"></div>
+                    <div class="ge-card__icon-badge">{{ supp.icon }}</div>
+                    <div class="absolute top-3 right-3 w-6 h-6 rounded-md flex items-center justify-center z-10"
                          [style]="supp.selected ? 'background:#D4AF37;' : 'background:rgba(255,255,255,0.2);border:1.5px solid rgba(255,255,255,0.5);backdrop-filter:blur(4px);'">
                       @if (supp.selected) {
                         <svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
                       }
                     </div>
-                    <!-- Name + price overlay at bottom of photo -->
-                    <div class="absolute bottom-0 left-0 right-0 p-3">
+                    <div class="ge-card__bottom">
                       <div class="text-xs font-bold text-white">{{ supp.name }}</div>
-                      <div class="text-[10px] font-bold" style="color:#F0D060;">+{{ supp.price }} MAD</div>
                     </div>
                   </div>
-                  <!-- Description strip -->
-                  <div class="px-4 py-3" [style]="supp.selected ? 'background:rgba(212,175,55,0.06);' : 'background:white;'">
-                    <div class="text-xs leading-relaxed" style="color:rgba(26,26,26,0.55);">{{ supp.description }}</div>
+                  <div class="ge-card__strip" [class.ge-card__strip--gold]="supp.selected">
+                    <span style="color:rgba(26,26,26,0.55);">{{ supp.description }}</span>
                   </div>
                 </div>
               }
@@ -948,51 +836,23 @@ type TableTier = 'none' | 'single' | 'trio';
             </div>
             <p class="text-xs mb-6" style="color:rgba(26,26,26,0.45);">Notre service de restauration thématique arrive bientôt pour compléter votre événement.</p>
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <!-- Cakes -->
-              <div class="relative rounded-2xl p-5 overflow-hidden" style="background:white;border:1px solid rgba(212,175,55,0.12);">
-                <div class="absolute inset-0 flex items-center justify-center z-10" style="background:rgba(253,251,247,0.8);backdrop-filter:blur(2px);">
-                  <div class="text-center">
-                    <div class="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2" style="background:rgba(212,175,55,0.1);border:1.5px solid rgba(212,175,55,0.25);">
-                      <svg class="w-4 h-4" style="color:rgba(212,175,55,0.7);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+              @for (food of [{icon:'🎂',label:'Gâteaux',desc:'Gâteaux thématiques et pièces montées sur mesure'},{icon:'🍬',label:'Sucré',desc:'Desserts fins, macarons et mignardises thématiques'},{icon:'🧆',label:'Salé',desc:'Amuse-bouches et buffet salé pour votre réception'}]; track food.label) {
+                <div class="ge-card" style="opacity:0.72;pointer-events:none;">
+                  <div class="ge-card__visual" style="height:140px;background:linear-gradient(140deg,#f5efe5,#ede4d3);">
+                    <div class="absolute inset-0 flex items-center justify-center z-10">
+                      <div class="text-center">
+                        <div class="text-4xl mb-2">{{ food.icon }}</div>
+                        <div class="text-xs font-bold" style="color:#1A1A1A;">{{ food.label }}</div>
+                      </div>
                     </div>
-                    <div class="text-[9px] font-bold tracking-[0.2em] uppercase" style="color:#D4AF37;">Bientôt</div>
+                    <div class="ge-card__badge" style="background:rgba(212,175,55,0.9);">Bientôt</div>
+                  </div>
+                  <div class="ge-card__strip">
+                    <span style="color:rgba(26,26,26,0.4);">{{ food.desc }}</span>
+                    <div class="mt-1 text-[10px] font-semibold" style="color:rgba(26,26,26,0.25);">Prix à confirmer</div>
                   </div>
                 </div>
-                <div class="text-3xl mb-3">🎂</div>
-                <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">Gâteaux</div>
-                <div class="text-[10px] leading-relaxed" style="color:rgba(26,26,26,0.4);">Gâteaux thématiques et pièces montées sur mesure</div>
-                <div class="mt-2 text-xs font-semibold" style="color:rgba(26,26,26,0.25);">Prix à confirmer</div>
-              </div>
-              <!-- Sweets -->
-              <div class="relative rounded-2xl p-5 overflow-hidden" style="background:white;border:1px solid rgba(212,175,55,0.12);">
-                <div class="absolute inset-0 flex items-center justify-center z-10" style="background:rgba(253,251,247,0.8);backdrop-filter:blur(2px);">
-                  <div class="text-center">
-                    <div class="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2" style="background:rgba(212,175,55,0.1);border:1.5px solid rgba(212,175,55,0.25);">
-                      <svg class="w-4 h-4" style="color:rgba(212,175,55,0.7);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                    </div>
-                    <div class="text-[9px] font-bold tracking-[0.2em] uppercase" style="color:#D4AF37;">Bientôt</div>
-                  </div>
-                </div>
-                <div class="text-3xl mb-3">🍬</div>
-                <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">Sucré</div>
-                <div class="text-[10px] leading-relaxed" style="color:rgba(26,26,26,0.4);">Desserts fins, macarons et mignardises thématiques</div>
-                <div class="mt-2 text-xs font-semibold" style="color:rgba(26,26,26,0.25);">Prix à confirmer</div>
-              </div>
-              <!-- Savory -->
-              <div class="relative rounded-2xl p-5 overflow-hidden" style="background:white;border:1px solid rgba(212,175,55,0.12);">
-                <div class="absolute inset-0 flex items-center justify-center z-10" style="background:rgba(253,251,247,0.8);backdrop-filter:blur(2px);">
-                  <div class="text-center">
-                    <div class="w-9 h-9 rounded-full flex items-center justify-center mx-auto mb-2" style="background:rgba(212,175,55,0.1);border:1.5px solid rgba(212,175,55,0.25);">
-                      <svg class="w-4 h-4" style="color:rgba(212,175,55,0.7);" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-                    </div>
-                    <div class="text-[9px] font-bold tracking-[0.2em] uppercase" style="color:#D4AF37;">Bientôt</div>
-                  </div>
-                </div>
-                <div class="text-3xl mb-3">🧆</div>
-                <div class="text-xs font-bold mb-1" style="color:#1A1A1A;">Salé</div>
-                <div class="text-[10px] leading-relaxed" style="color:rgba(26,26,26,0.4);">Amuse-bouches et buffet salé pour votre réception</div>
-                <div class="mt-2 text-xs font-semibold" style="color:rgba(26,26,26,0.25);">Prix à confirmer</div>
-              </div>
+              }
             </div>
           </div>
 
@@ -1133,20 +993,18 @@ type TableTier = 'none' | 'single' | 'trio';
           <div class="space-y-2.5 mb-6">
             <div class="flex items-center justify-between text-sm">
               <span style="color:rgba(26,26,26,0.55);">Package de base</span>
-              <span class="font-bold tabular-nums" style="color:#1A1A1A;">{{ selectedTheme().basePrice }} MAD</span>
+              <span class="font-bold" style="color:#D4AF37;">Sur devis</span>
             </div>
 
             @if (backdropTier() !== 'standard') {
               <div class="flex items-center justify-between text-sm">
                 <span style="color:rgba(26,26,26,0.55);">{{ backdropLabel() }}</span>
-                <span class="font-semibold tabular-nums" style="color:#D4AF37;">+{{ backdropPrice() }} MAD</span>
               </div>
             }
 
             @if (tableTier() !== 'none') {
               <div class="flex items-center justify-between text-sm">
                 <span style="color:rgba(26,26,26,0.55);">{{ tableLabel() }}</span>
-                <span class="font-semibold tabular-nums" style="color:#D4AF37;">+{{ tablePrice() }} MAD</span>
               </div>
             }
 
@@ -1154,7 +1012,6 @@ type TableTier = 'none' | 'single' | 'trio';
               @if (supp.selected) {
                 <div class="flex items-center justify-between text-sm">
                   <span style="color:rgba(26,26,26,0.55);">{{ supp.name }}</span>
-                  <span class="font-semibold tabular-nums" style="color:#D4AF37;">+{{ supp.price }} MAD</span>
                 </div>
               }
             }
@@ -1162,14 +1019,6 @@ type TableTier = 'none' | 'single' | 'trio';
             @if (supplementsTotal() === 0) {
               <div class="text-xs italic" style="color:rgba(26,26,26,0.3);">Aucun ajout sélectionné</div>
             }
-          </div>
-
-          <!-- Total -->
-          <div class="pt-5 mb-6" style="border-top:1.5px solid rgba(212,175,55,0.18);">
-            <div class="flex items-center justify-between">
-              <span class="text-sm font-bold" style="color:#1A1A1A;">Total estimé</span>
-              <span class="font-display italic text-3xl tabular-nums" style="color:#D4AF37;">{{ estimatedTotal() }}<span class="text-base ml-1">MAD</span></span>
-            </div>
           </div>
 
           <button (click)="scrollToBook()"
@@ -1249,10 +1098,7 @@ type TableTier = 'none' | 'single' | 'trio';
   <div class="fixed bottom-6 right-5 z-40 animate-float">
     <div class="rounded-2xl p-4 text-white min-w-[148px] text-right"
          style="background:linear-gradient(135deg,#D4AF37,#C4A02A);box-shadow:0 8px 32px rgba(212,175,55,0.4);">
-      <div class="text-[9px] tracking-[0.2em] uppercase mb-1 opacity-75">Total estimé</div>
-      <div class="font-display italic text-2xl tabular-nums leading-none">{{ estimatedTotal() }}</div>
-      <div class="text-[10px] opacity-70 mt-0.5">MAD</div>
-      <button (click)="scrollToBook()" class="mt-2.5 text-[9px] font-bold tracking-wider uppercase underline underline-offset-2 opacity-80 hover:opacity-100 transition-opacity">
+      <button (click)="scrollToBook()" class="text-[10px] font-bold tracking-wider uppercase">
         Réserver →
       </button>
     </div>
@@ -1283,10 +1129,29 @@ export class AppComponent {
   tableTier       = signal<TableTier>('none');
 
   supplements = signal<Supplement[]>([
-    { id: 'macaron', icon: '🧁', name: 'Tour de Macarons', description: 'Macarons colorés sur présentoir étagé en cristal', price: 200, selected: false, image: 'assets/images/buffet3.jpeg' },
-    { id: 'neon',    icon: '✨', name: 'Enseigne Néon sur Mesure', description: 'LED néon avec prénom, phrase ou initiales du bébé', price: 400, selected: false, image: 'assets/images/buffet1.jpeg' },
-    { id: 'candy',   icon: '🍬', name: 'Bar à Bonbons Premium', description: 'Bocaux thématiques, présentoirs et emballages personnalisés', price: 180, selected: false, image: 'assets/images/buffet4.jpeg' },
-    { id: 'florals', icon: '💐', name: 'Arrangements Floraux Luxe', description: 'Fleurs fraîches ou en soie dans les teintes du thème', price: 350, selected: false, image: 'assets/images/buffet5.jpeg' },
+    // ── Baby Shower ──────────────────────────────────────────────
+    { tab: 'baby-shower', id: 'bs-macaron',     icon: '🧁', name: 'Tour de Macarons',        description: 'Présentoir étagé en cristal avec macarons colorés aux teintes du thème', price: 200, selected: false, image: 'assets/images/supplement/babyshower/babyshower18.jpg' },
+    { tab: 'baby-shower', id: 'bs-neon-prenom', icon: '✨', name: 'Néon Prénom',              description: 'Enseigne LED avec le prénom de bébé en calligraphie illuminée', price: 400, selected: false, image: 'assets/images/supplement/neons/WhatsApp Image 2026-07-06 at 14.08.19 (1).jpeg' },
+    { tab: 'baby-shower', id: 'bs-neon-phrase', icon: '✨', name: 'Néon Phrase',              description: 'Citation ou phrase personnalisée en néon LED sur mesure', price: 550, selected: false, image: 'assets/images/supplement/neons/WhatsApp Image 2026-07-06 at 14.08.19 (2).jpeg' },
+    { tab: 'baby-shower', id: 'bs-neon-double', icon: '✨', name: 'Néon Double Face',         description: 'Enseigne néon visible des deux côtés, idéale pour l\'entrée de salle', price: 700, selected: false, image: 'assets/images/supplement/neons/WhatsApp Image 2026-07-06 at 14.08.19.jpeg' },
+    { tab: 'baby-shower', id: 'bs-candy',       icon: '🍬', name: 'Bar à Bonbons Premium',   description: 'Bocaux thématiques, présentoirs et emballages personnalisés', price: 180, selected: false, image: 'assets/images/supplement/babyshower/babyshower19.jpg' },
+    { tab: 'baby-shower', id: 'bs-florals',     icon: '💐', name: 'Arrangements Floraux',    description: 'Fleurs fraîches ou en soie dans les teintes du thème', price: 350, selected: false, image: 'assets/images/supplement/hennePic/supphenne7.jpg' },
+    { tab: 'baby-shower', id: 'bs-photocall',   icon: '📸', name: 'Photocall Personnalisé',  description: 'Backdrop aux couleurs du thème pour vos photos souvenirs', price: 300, selected: false, image: 'assets/images/supplement/babyshower/babyshower2.jpg' },
+    { tab: 'baby-shower', id: 'bs-ballons',     icon: '🎈', name: 'Ballons Personnalisés',   description: 'Guirlandes et compositions de ballons coordonnées au thème', price: 250, selected: false, image: 'assets/images/supplement/babyshower/babyshower4.jpg' },
+    { tab: 'baby-shower', id: 'bs-topper',      icon: '🎂', name: 'Cake Topper & Figurines', description: 'Figurines décoratives et toppers assortis pour votre gâteau', price: 150, selected: false, image: 'assets/images/supplement/babyshower/babyshower13.jpg' },
+    // ── Anniversaire ─────────────────────────────────────────────
+    { tab: 'anniversaire', id: 'ann-neon-prenom', icon: '✨', name: 'Néon Prénom',            description: 'Enseigne LED avec le prénom en calligraphie moderne', price: 400, selected: false, image: 'assets/images/supplement/neons/WhatsApp Image 2026-07-06 at 14.08.19 (1).jpeg' },
+    { tab: 'anniversaire', id: 'ann-neon-phrase', icon: '✨', name: 'Néon Phrase',            description: 'Message personnalisé en néon LED pour une ambiance festive', price: 550, selected: false, image: 'assets/images/supplement/neons/WhatsApp Image 2026-07-06 at 14.08.19 (2).jpeg' },
+    { tab: 'anniversaire', id: 'ann-neon-double', icon: '✨', name: 'Néon Double Face',       description: 'Enseigne double face, parfaite pour l\'entrée de salle', price: 700, selected: false, image: 'assets/images/supplement/neons/WhatsApp Image 2026-07-06 at 14.08.19.jpeg' },
+    { tab: 'anniversaire', id: 'ann-florals',     icon: '💐', name: 'Arrangements Floraux',  description: 'Fleurs fraîches ou en soie dans les teintes de votre anniversaire', price: 350, selected: false, image: 'assets/images/supplement/hennePic/supphenne7.jpg' },
+    { tab: 'anniversaire', id: 'ann-candy',       icon: '🍬', name: 'Bar à Bonbons Premium', description: 'Bocaux assortis, présentoirs et emballages aux couleurs du thème', price: 180, selected: false, image: 'assets/images/supplement/babyshower/babyshower19.jpg' },
+    // ── Henna ────────────────────────────────────────────────────
+    { tab: 'henna', id: 'henna-neon',    icon: '✨', name: 'Néon Arabesque',              description: 'Enseigne LED en calligraphie arabe ou arabesque sur mesure', price: 400, selected: false, image: 'assets/images/supplement/neons/WhatsApp Image 2026-07-06 at 14.08.19 (1).jpeg' },
+    { tab: 'henna', id: 'henna-florals', icon: '🌸', name: 'Fleurs & Bougies Orientales', description: 'Arrangements floraux et photophores aux notes orientales', price: 300, selected: false, image: 'assets/images/supplement/hennePic/supphenne6.jpg' },
+    { tab: 'henna', id: 'henna-photo',   icon: '🖼️', name: 'Mur de Photos Personnalisé', description: 'Cadre décoratif avec vos photos imprimées pour la soirée', price: 250, selected: false, image: 'assets/images/supplement/hennePic/supphenne12.jpg' },
+    // ── Bride ────────────────────────────────────────────────────
+    { tab: 'bride', id: 'bride-arch',  icon: '💍', name: 'Arche Nuptiale',        description: 'Arche fleurie sur mesure pour la cérémonie ou la réception', price: 800, selected: false, image: 'assets/images/supplement/category bridge/Categories Bride.jpg',  images: ['assets/images/supplement/category bridge/Categories Bride.jpg', 'assets/images/supplement/category bridge/Categories Bride2.jpg'] },
+    { tab: 'bride', id: 'bride-decor', icon: '👰', name: 'Décoration Mariée Luxe', description: 'Package décoration complète aux couleurs de votre mariage', price: 1200, selected: false, image: 'assets/images/supplement/category bridge/Categories Bride3.jpg', images: ['assets/images/supplement/category bridge/Categories Bride3.jpg', 'assets/images/supplement/category bridge/Categories Bride4.jpg'] },
   ]);
 
   bookingData: BookingData = { fullName: '', phone: '+212 ', eventDate: '', eventHour: '', baseTheme: 'little-princesse', notes: '' };
@@ -1348,7 +1213,7 @@ export class AppComponent {
         'Installation, montage et démontage inclus',
       ],
       palette: [{ name: 'Blush', hex: '#FFB6C1' }, { name: 'Perle', hex: '#F9F0F3' }, { name: 'Or', hex: '#D4AF37' }, { name: 'Rose', hex: '#E8A0B0' }],
-      images: ['assets/images/buffet5.jpeg', 'assets/images/buffet6.jpeg'],
+      images: ['assets/images/buffet5.jpeg','assets/images/buffet6.jpeg'],
       testimonialQuotes: [
         { name: 'Fatima Z.', location: 'Meknès', event: 'Baby Shower', quote: 'L\'arche rose et or était absolument magnifique. Toutes les invitées se prenaient en photo devant. La qualité est vraiment premium — j\'ai été époustouflée dès l\'entrée.' },
         { name: 'Hasna R.', location: 'Meknès', event: 'Baby Shower', quote: 'La peluche géante avec le ruban rose était à croquer. Ma fille en parle encore six mois après. Khaoula a compris exactement ce que je voulais dès la première consultation.' },
@@ -1375,7 +1240,7 @@ export class AppComponent {
         'Installation, montage et démontage inclus',
       ],
       palette: [{ name: 'Beige', hex: '#F5E6C8' }, { name: 'Crème', hex: '#FFF8F0' }, { name: 'Caramel', hex: '#C49A6C' }, { name: 'Sable', hex: '#C2A47E' }],
-      images: ['assets/images/buffet4.jpeg', 'assets/images/buffet3.jpeg'],
+      images: ['assets/images/buffet4.jpeg','assets/images/buffet3.jpeg'],
       testimonialQuotes: [
         { name: 'Leila M.', location: 'Rabat', event: 'Baby Shower', quote: 'C\'était exactement l\'ambiance intime et chaleureuse que je recherchais. Les tons neutres se mariaient parfaitement avec notre intérieur. Mes invitées ont adoré le style épuré.' },
         { name: 'Yasmina O.', location: 'Salé', event: 'Baby Shower', quote: 'La signalétique en bois avec le prénom de mon fils était un détail magnifique que nous avons gardé dans sa chambre. Tout était coordonné avec une attention rare aux détails.' },
@@ -1402,7 +1267,7 @@ export class AppComponent {
         'Installation, montage et démontage inclus',
       ],
       palette: [{ name: 'Royal', hex: '#4169E1' }, { name: 'Ciel', hex: '#87CEEB' }, { name: 'Blanc', hex: '#F0F4FF' }, { name: 'Or', hex: '#D4AF37' }],
-      images: ['assets/images/buffet2.jpeg', 'assets/images/buffet7.jpeg'],
+      images: ['assets/images/buffet2.jpeg','assets/images/buffet7.jpeg'],
       testimonialQuotes: [
         { name: 'Nadia B.', location: 'Fès', event: 'Baby Shower', quote: 'L\'arche bleu royal était majestueuse. Mon fils portait une petite couronne assortie — les photos sont dignes d\'un magazine. Le service était ponctuel et extrêmement soigné.' },
         { name: 'Houda K.', location: 'Meknès', event: 'Baby Shower', quote: 'La qualité des ballons et la cohérence des couleurs étaient remarquables. Khaoula a su créer un univers royal sans tomber dans le trop chargé. Parfaitement équilibré.' },
@@ -1496,6 +1361,11 @@ export class AppComponent {
   filteredThemes = computed(() => this.allThemes.filter(t => t.tab === this.activeTab()));
 
   selectedTheme = computed(() => this.allThemes.find(t => t.id === this.selectedThemeId()) ?? this.allThemes[0]);
+
+  filteredSupplements = computed(() => {
+    const tab = this.selectedTheme().tab;
+    return this.supplements().filter(s => s.tab === tab);
+  });
 
   backdropPrice = computed(() => ({ standard: 0, double: 300, trio: 550 }[this.backdropTier()]));
   tablePrice    = computed(() => ({ none: 0, single: 250, trio: 450 }[this.tableTier()]));
